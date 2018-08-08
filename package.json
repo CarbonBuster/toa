@@ -1,0 +1,7 @@
+{
+  "name": "toa",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Ross McEwan <rossmcewan@gmail.com>",
+  "license": "MIT"
+}
