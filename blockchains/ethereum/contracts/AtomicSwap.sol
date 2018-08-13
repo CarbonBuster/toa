@@ -11,6 +11,7 @@ contract AtomicSwap {
         address swappee;
         bytes32 hash;
         bytes preimage;
+        string xAddress;
     }
 
     enum States {
@@ -52,7 +53,7 @@ contract AtomicSwap {
         _;
     }
 
-    function open(bytes32 _swapID, uint256 _tokenValue, address _tokenAddress, address _swappee, bytes32 _hash, uint256 _timelock) public onlyInvalidSwaps(_swapID) {
+    function open(bytes32 _swapID, uint256 _tokenValue, address _tokenAddress, address _swappee, bytes32 _hash, uint256 _timelock, string _xAddress) public onlyInvalidSwaps(_swapID) {
         require(swapStates[_swapID] == States.INVALID, "Swap must be INVALID");
         // Transfer value from the swapper to this contract.
         ERC20 erc20Contract = ERC20(_tokenAddress);
@@ -67,7 +68,8 @@ contract AtomicSwap {
             tokenAddress: _tokenAddress,
             swappee: _swappee,
             hash: _hash,
-            preimage: new bytes(0)
+            preimage: new bytes(0),
+            xAddress: _xAddress
         });
         swaps[_swapID] = swap;
         swapStates[_swapID] = States.OPEN;
@@ -99,9 +101,9 @@ contract AtomicSwap {
         emit Expire(_swapID);
     }
 
-    function check(bytes32 _swapID) public view returns (uint256 timelock, uint256 tokenValue, address tokenAddress, address swappee, bytes32 hash) {
+    function check(bytes32 _swapID) public view returns (uint256 timelock, uint256 tokenValue, address tokenAddress, address swappee, bytes32 hash, string xAddress) {
         Swap memory swap = swaps[_swapID];
-        return (swap.timelock, swap.tokenValue, swap.tokenAddress, swap.swappee, swap.hash);
+        return (swap.timelock, swap.tokenValue, swap.tokenAddress, swap.swappee, swap.hash, swap.xAddress);
     }
 
     function checkSecretKey(bytes32 _swapID) public view onlyClosedSwaps(_swapID) returns (bytes preimage) {

@@ -1,9 +1,21 @@
 import React, { Component } from 'react'
-import { AccountData, ContractForm } from 'drizzle-react-components'
-import logo from '../../logo.png'
+// import { AccountData, ContractForm } from 'drizzle-react-components'
+import logo from '../../../logo.png'
+import EthereumSwap from '../../content/EthereumSwap';
+import StellarSwap from '../../content/StellarSwap';
 import * as util from 'ethereumjs-util';
 
 class Home extends Component {
+  constructor(props){
+    super(props);
+    this.onChainSelected = this.onChainSelected.bind(this);
+  }
+
+  onChainSelected(event){
+    console.log('onChainSelected', event.target.value);
+    this.props.setSelectedChain(event.target.value);
+  }
+
   render() {
     console.log('SwapID', util.bufferToHex(util.setLengthLeft('1342424', 32)));
     return (
@@ -11,23 +23,32 @@ class Home extends Component {
         <div className="pure-g">
           <div className="pure-u-1-1 header">
             <img src={logo} alt="drizzle-logo" />
-            <h1>Drizzle Examples</h1>
-            <p>Examples of how to get started with Drizzle in various situations.</p>
-
+            <h1>TOA - Atomic Swaps</h1>
+            <p>Swap $DALA between supported blockchains</p>
             <br/><br/>
           </div>
 
           <div className="pure-u-1-1">
+            <h2>Source Chain</h2>
+            <select defaultValue="" onChange={this.onChainSelected}>
+              <option value="" disabled>Choose Chain</option>
+              <option value='ethereum'>Ethereum</option>
+              <option value='stellar'>Stellar</option>
+            </select>
+          </div>
+
+          <div className="pure-u-1-1">
+            <EthereumSwap {...this.props}/>
+            <StellarSwap {...this.props}/>
+          </div>
+
+          {/* <div className="pure-u-1-1">
             <h2>Active Account</h2>
             <AccountData accountIndex="0" units="ether" precision="3" />
 
             <br/><br/>
-          </div>
+          </div> */}
 
-          <div className="pure-u-1-1">
-            <h2>Atomic Swap</h2>
-            
-          </div>
 
           {/* <div className="pure-u-1-1">
             <h2>SimpleStorage</h2>

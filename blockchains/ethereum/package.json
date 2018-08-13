@@ -5,5 +5,10 @@
   "license": "MIT",
   "dependencies": {
     "zeppelin-solidity": "^1.11.0"
+  },
+  "devDependencies": {
+    "ethereumjs-util": "^5.2.0",
+    "moment": "^2.22.2",
+    "stellar-sdk": "^0.10.2"
   }
 }
