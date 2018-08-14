@@ -1,4 +1,5 @@
 import AtomicSwap from './../../blockchains/ethereum/build/contracts/AtomicSwap.json'
+import TestToken from './../../blockchains/ethereum/build/contracts/TestToken.json'
 
 const drizzleOptions = {
   web3: {
@@ -9,10 +10,12 @@ const drizzleOptions = {
     }
   },
   contracts: [
-    AtomicSwap
+    AtomicSwap,
+    TestToken
   ],
   events: {
-    AtomicSwap: ['Open','Expire','Close']
+    AtomicSwap: ['Open','Expire','Close'],
+    TestToken: ['Approval','Transfer']
   },
   polls: {
     accounts: 1500

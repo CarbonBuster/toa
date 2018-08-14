@@ -1,9 +1,8 @@
-import { browserHistory } from 'react-router'
 import { createStore, applyMiddleware, compose } from 'redux'
 import thunkMiddleware from 'redux-thunk'
-import { routerMiddleware } from 'react-router-redux'
-import reducer from './reducers';
-import rootSaga from './rootSaga'
+import { routerMiddleware, browserHistory } from 'react-router-redux/lib'
+import reducer from './reducers'
+import saga from './sagas'
 import createSagaMiddleware from 'redux-saga'
 import { generateContractsInitialState } from 'drizzle'
 import drizzleOptions from './drizzleOptions'
@@ -30,6 +29,6 @@ const store = createStore(
   )
 )
 
-sagaMiddleware.run(rootSaga)
+sagaMiddleware.run(saga)
 
 export default store

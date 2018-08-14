@@ -14,7 +14,7 @@ contract('AtomicSwap', async accounts => {
     let timelock = moment
       .utc()
       .add(1, 'days')
-      .milliseconds();
+      .valueOf();
     let keypair = StellarSdk.Keypair.random();
     let xAddress = keypair.publicKey();
 
