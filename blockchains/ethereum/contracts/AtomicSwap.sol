@@ -12,6 +12,7 @@ contract AtomicSwap {
         bytes32 hash;
         bytes preimage;
         string xAddress;
+        string counterXAddress;
     }
 
     enum States {
@@ -24,9 +25,10 @@ contract AtomicSwap {
     mapping (bytes32 => Swap) private swaps;
     mapping (bytes32 => States) private swapStates;
 
-    event Open(bytes32 _swapID, address _swappee,bytes32 _hash);
-    event Expire(bytes32 _swapID);
-    event Close(bytes32 _swapID, bytes _preimage);
+    event Open(bytes32 indexed _swapID, address _swappee, bytes32 _hash);
+    event Expire(bytes32 indexed _swapID);
+    event Close(bytes32 indexed _swapID, bytes _preimage);
+    event Accept(bytes32 indexed _swapID, string _counterXAddress);
 
     modifier onlyInvalidSwaps(bytes32 _swapID) {
         require (swapStates[_swapID] == States.INVALID, "Swap state must be INVALID");
@@ -53,8 +55,12 @@ contract AtomicSwap {
         _;
     }
 
+    modifier onlySwappee(bytes32 _swapID, address _swappee) {
+        require (swaps[_swapID].swappee == _swappee, "Called must be swappee");
+        _;
+    }
+
     function open(bytes32 _swapID, uint256 _tokenValue, address _tokenAddress, address _swappee, bytes32 _hash, uint256 _timelock, string _xAddress) public onlyInvalidSwaps(_swapID) {
-        require(swapStates[_swapID] == States.INVALID, "Swap must be INVALID");
         // Transfer value from the swapper to this contract.
         ERC20 erc20Contract = ERC20(_tokenAddress);
         require(_tokenValue <= erc20Contract.allowance(msg.sender, address(this)), "Value must be less than or equal to allowance");
@@ -69,11 +75,17 @@ contract AtomicSwap {
             swappee: _swappee,
             hash: _hash,
             preimage: new bytes(0),
-            xAddress: _xAddress
+            xAddress: _xAddress,
+            counterXAddress: ""
         });
         swaps[_swapID] = swap;
         swapStates[_swapID] = States.OPEN;
         emit Open(_swapID, _swappee, _hash);
+    }
+
+    function accept(bytes32 _swapID, string _counterXAddress) public onlyOpenSwaps(_swapID) onlySwappee(_swapID, msg.sender) {
+        swaps[_swapID].counterXAddress = _counterXAddress;
+        emit Accept(_swapID, _counterXAddress);
     }
 
     function close(bytes32 _swapID, bytes _preimage) public onlyOpenSwaps(_swapID) onlyWithPreimage(_swapID, _preimage) {
@@ -101,12 +113,13 @@ contract AtomicSwap {
         emit Expire(_swapID);
     }
 
-    function check(bytes32 _swapID) public view returns (uint256 timelock, uint256 tokenValue, address tokenAddress, address swappee, bytes32 hash, string xAddress) {
+    function getSwap(bytes32 _swapID) public view returns (uint256 timelock, uint256 tokenValue, address tokenAddress, address swappee, bytes32 hash, string xAddress, AtomicSwap.States states, string counterXAddress) {
+        AtomicSwap.States _state = swapStates[_swapID];
         Swap memory swap = swaps[_swapID];
-        return (swap.timelock, swap.tokenValue, swap.tokenAddress, swap.swappee, swap.hash, swap.xAddress);
+        return (swap.timelock, swap.tokenValue, swap.tokenAddress, swap.swappee, swap.hash, swap.xAddress, _state, swap.counterXAddress);
     }
 
-    function checkSecretKey(bytes32 _swapID) public view onlyClosedSwaps(_swapID) returns (bytes preimage) {
+    function getPreimage(bytes32 _swapID) public view onlyClosedSwaps(_swapID) returns (bytes preimage) {
         Swap memory swap = swaps[_swapID];
         return swap.preimage;
     }

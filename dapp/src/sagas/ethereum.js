@@ -49,8 +49,9 @@ function* openSwap(action) {
   const hashlock = ethUtil.bufferToHex(ethUtil.setLengthLeft(hash.digest(), 32));
   const timelock = moment
     .utc()
-    .add(1, 'hour')
-    .valueOf();
+    .add(10, 'seconds')//just for testing
+    // .add(1, 'hour')
+    .valueOf()/1000;
 
   //call contract
   let drizzle = yield select(state => state.drizzle.instance);
@@ -78,8 +79,6 @@ function* openSwap(action) {
     stellarAddress,
     transactionId
   };
-  console.log(payload);
-  console.log(JSON.stringify(payload));
   localStorage.setItem(swapId, JSON.stringify(payload));
 }
 

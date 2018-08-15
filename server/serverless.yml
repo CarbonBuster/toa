@@ -1,0 +1,23 @@
+service: toa-server
+
+package:
+  include:
+    - src/**
+
+provider:
+  name: aws
+  stage: ${opt:stage, self:custom.defaultStage}
+  profile: ${opt:profile}
+  region: eu-west-1
+  runtime: nodejs8.10
+  environment:
+  environmentSecrets:
+  iamRoleStatements:
+
+plugins:
+  - serverless-secrets
+
+resources:
+  Outputs:
+  Resources:
+    AtomicSwapEventsDynamoDbTable: ${file(./CloudFormation/DynamoDB/AtomicSwapEvents.yml):Table}
