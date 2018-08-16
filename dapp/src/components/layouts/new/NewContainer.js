@@ -1,7 +1,5 @@
-import Home from './Home';
-import { setDrizzle } from '../../../actions/drizzle';
+import New from './New';
 import { setSelectedChain } from '../../../actions/chains';
-import { getWeb3 } from '../../../actions/web3';
 import { drizzleConnect } from 'drizzle-react';
 
 // May still need this even with data function to refresh component on updates for this contract.
@@ -15,11 +13,9 @@ const mapStateToProps = state => {
 };
 
 const actions = {
-  setSelectedChain,
-  getWeb3,
-  setDrizzle
+  setSelectedChain
 };
 
-const HomeContainer = drizzleConnect(Home, mapStateToProps, actions);
+const NewContainer = drizzleConnect(New, mapStateToProps, actions);
 
-export default HomeContainer;
+export default NewContainer;

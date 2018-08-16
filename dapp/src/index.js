@@ -6,7 +6,9 @@ import { DrizzleProvider } from 'drizzle-react';
 
 // Layouts
 import App from './App';
-import HomeContainer from './components/layouts/home/HomeContainer';
+import NewContainer from './components/layouts/new/NewContainer';
+import SwapsContainer from './components/layouts/swaps/SwapsContainer';
+import SwapContainer from './components/layouts/swap/SwapContainer';
 import { LoadingContainer } from 'drizzle-react-components';
 
 import store from './store';
@@ -19,8 +21,10 @@ ReactDOM.render(
     <LoadingContainer>
       <Router history={history}>
         <Route path="/" component={App}>
-          <IndexRoute component={HomeContainer} />
-        </Route>
+          <IndexRoute component={SwapsContainer} />
+          <Route path="/new" component={NewContainer}/>
+          <Route path="/:chain/:id" component={SwapContainer}/>
+        </Route>        
       </Router>
     </LoadingContainer>
   </DrizzleProvider>,

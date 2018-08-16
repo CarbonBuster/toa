@@ -9,6 +9,10 @@ class EthereumSwap extends Component {
     this.onDalaAmountCaptured = this.onDalaAmountCaptured.bind(this);
     this.onStellarAddressCaptured = this.onStellarAddressCaptured.bind(this);
     this.openSwap = this.openSwap.bind(this);
+    this.onChainSelected = this.onChainSelected.bind(this);
+    this.state = {
+      chain: ''
+    }
   }
 
   onDalaAmountCaptured(event) {
@@ -27,6 +31,12 @@ class EthereumSwap extends Component {
     this.props.openSwap(this.state);
   }
 
+  onChainSelected(event) {
+    this.setState({
+      targetChain: event.target.value
+    })
+  }
+
   render() {
     if (this.props.chains.selectedChain === 'ethereum')
       return (
@@ -39,9 +49,19 @@ class EthereumSwap extends Component {
             <div>
               <h3>How many $DALA would you like to swap from Ethereum?</h3>
               <input type="text" onChange={this.onDalaAmountCaptured} />
+              <h2>Target Chain</h2>
+              <select defaultValue="" onChange={this.onChainSelected}>
+                <option value="" disabled>
+                  Choose Chain
+                </option>
+                <option value="stellar">Stellar</option>
+              </select>
+            </div>
+          )}
+          {this.state.targetChain === 'stellar' && (
+            <div>
               <h3>What is your Stellar address</h3>
               <input type="text" onChange={this.onStellarAddressCaptured} />
-              <br />
               <br />
               <button onClick={this.openSwap}>SWAP!</button>
             </div>
@@ -64,6 +84,6 @@ const mapStateToProps = state => {
 
 const actions = {
   openSwap
-}
+};
 
 export default drizzleConnect(EthereumSwap, mapStateToProps, actions);

@@ -2,6 +2,7 @@ import { SET_SELECTED_CHAIN } from '../actions/chains';
 import { setDalaBalance, setEtherBalance, setLoaded, OPEN_SWAP } from '../actions/ethereum';
 import { addSwap } from '../actions/swaps';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { push } from 'react-router-redux';
 import ethUtil from 'ethereumjs-util';
 import Crypto from 'crypto';
 import moment from 'moment';
@@ -59,17 +60,6 @@ function* openSwap(action) {
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const TestToken = drizzle.contracts.TestToken;
 
-  console.log(
-    'args',
-    swapId,
-    dalaAmount * 10 ** 18,
-    TestToken.address,
-    '0x5aeda56215b167893e80b4fe645ba6d5bab767de',
-    hashlock,
-    timelock,
-    stellarAddress
-  );
-
   const transactionId = yield call(
     AtomicSwap.methods.open(
       swapId,
@@ -90,9 +80,11 @@ function* openSwap(action) {
     timelock,
     dalaAmount,
     stellarAddress,
-    transactionId
+    transactionId,
+    status: 'Open'
   };
   yield put(addSwap(payload));
+  yield put(push('/'));
 }
 
 export function* watchSelectedChain() {

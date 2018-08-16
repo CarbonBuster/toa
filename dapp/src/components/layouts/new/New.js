@@ -1,20 +1,13 @@
 import React, { Component } from 'react'
-import { ContractForm } from 'drizzle-react-components'
 import logo from '../../../logo.png'
 import EthereumSwap from '../../content/EthereumSwap';
 import StellarSwap from '../../content/StellarSwap';
 import PropTypes from 'prop-types';
-import * as util from 'ethereumjs-util';
 
-class Home extends Component {
+class New extends Component {
   constructor(props, context){
     super(props);
     this.onChainSelected = this.onChainSelected.bind(this);
-  }
-
-  componentDidMount(){
-    this.props.setDrizzle(this.context.drizzle);
-    this.props.getWeb3();
   }
 
   onChainSelected(event){
@@ -53,8 +46,8 @@ class Home extends Component {
   }
 }
 
-Home.contextTypes = {
+New.contextTypes = {
   drizzle: PropTypes.object
 }
 
-export default Home
+export default New
