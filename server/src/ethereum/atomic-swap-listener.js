@@ -29,7 +29,7 @@ const monitorSwap = async () => {
     let {
       args: { _swapID }
     } = event;
-    let [timelock, value, tokenAddress, swappee, hash, xAddress, status] = await swap.check(_swapID);
+    let [timelock, value, tokenAddress, swappee, hash, xAddress, status] = await swap.getSwap(_swapID);
     let swapEvent = new AtomicSwapEvent()
       .withId(_swapID)
       .withTimelock(timelock.toString())

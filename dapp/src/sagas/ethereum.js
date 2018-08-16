@@ -1,5 +1,6 @@
 import { SET_SELECTED_CHAIN } from '../actions/chains';
 import { setDalaBalance, setEtherBalance, setLoaded, OPEN_SWAP } from '../actions/ethereum';
+import { addSwap } from '../actions/swaps';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import ethUtil from 'ethereumjs-util';
 import Crypto from 'crypto';
@@ -37,7 +38,6 @@ function* onChainSelected(action) {
 }
 
 function* openSwap(action) {
-  console.log('ethereum.openSwap');
   const { dalaAmount, stellarAddress } = action.payload;
   //generate swap ID
   const swapId = ethUtil.bufferToHex(ethUtil.setLengthLeft(Crypto.randomBytes(32), 32));
@@ -47,16 +47,29 @@ function* openSwap(action) {
   const hash = Crypto.createHash('sha256');
   hash.update(preimage);
   const hashlock = ethUtil.bufferToHex(ethUtil.setLengthLeft(hash.digest(), 32));
-  const timelock = moment
-    .utc()
-    .add(10, 'seconds')//just for testing
-    // .add(1, 'hour')
-    .valueOf()/1000;
+  const timelock =
+    moment
+      .utc()
+      .add(10, 'seconds') //just for testing
+      // .add(1, 'hour')
+      .valueOf() / 1000;
 
   //call contract
   let drizzle = yield select(state => state.drizzle.instance);
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const TestToken = drizzle.contracts.TestToken;
+
+  console.log(
+    'args',
+    swapId,
+    dalaAmount * 10 ** 18,
+    TestToken.address,
+    '0x5aeda56215b167893e80b4fe645ba6d5bab767de',
+    hashlock,
+    timelock,
+    stellarAddress
+  );
+
   const transactionId = yield call(
     AtomicSwap.methods.open(
       swapId,
@@ -68,10 +81,10 @@ function* openSwap(action) {
       stellarAddress
     ).send
   );
-  console.log('AtomicSwap.transactionId', transactionId);
 
   const payload = {
-    swapId,
+    id: swapId,
+    chain: 'ethereum',
     preimage,
     hashlock,
     timelock,
@@ -79,7 +92,7 @@ function* openSwap(action) {
     stellarAddress,
     transactionId
   };
-  localStorage.setItem(swapId, JSON.stringify(payload));
+  yield put(addSwap(payload));
 }
 
 export function* watchSelectedChain() {
