@@ -3,7 +3,19 @@ const db = new LocalStorageDb('toa', localStorage);
 
 function createTableIfNotExists() {
   if (!db.tableExists('swaps')) {
-    db.createTable('swaps', ['id', 'chain', 'amount', 'hashlock', 'preimage', 'xAddress', 'timelock', 'transaction']);
+    db.createTable('swaps', [
+      'id',
+      'sourceChain',
+      'targetChain',
+      'amount',
+      'hashlock',
+      'preimage',
+      'xAddress',
+      'counterXAddress',
+      'timelock',
+      'transaction',
+      'status'
+    ]);
   }
 }
 
@@ -12,8 +24,26 @@ export async function getSwaps() {
   return db.queryAll('swaps');
 }
 
+export async function getSwap(id) {
+  createTableIfNotExists();
+  let swaps = db.queryAll('swaps', {
+    id
+  });
+  return swaps.length && swaps[0];
+}
+
 export async function addSwap(swap) {
   createTableIfNotExists();
   db.insertOrUpdate('swaps', { id: swap.id }, swap);
   db.commit();
+}
+
+export async function updateSwap(swap) {
+  createTableIfNotExists();
+  db.update('swaps', { id: swap.id }, row => {
+    return {
+      ...row,
+      ...swap
+    };
+  });
 }

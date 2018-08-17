@@ -23,7 +23,7 @@ ReactDOM.render(
         <Route path="/" component={App}>
           <IndexRoute component={SwapsContainer} />
           <Route path="/new" component={NewContainer}/>
-          <Route path="/:chain/:id" component={SwapContainer}/>
+          <Route path="/:id" component={SwapContainer}/>
         </Route>        
       </Router>
     </LoadingContainer>

@@ -1,6 +1,6 @@
 import { SET_SELECTED_CHAIN } from '../actions/chains';
-import { setDalaBalance, setEtherBalance, setLoaded, OPEN_SWAP } from '../actions/ethereum';
-import { addSwap } from '../actions/swaps';
+import { setDalaBalance, setEtherBalance, setLoaded, OPEN_SWAP, GET_SWAP } from '../actions/ethereum';
+import { addSwap, updateSwap } from '../actions/swaps';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import { push } from 'react-router-redux';
 import ethUtil from 'ethereumjs-util';
@@ -9,6 +9,13 @@ import moment from 'moment';
 import Big from 'big.js';
 
 const DECIMALS = 10 ** 18;
+
+const SwapStates = {
+  '0':'Invalid',
+  '1':'Open',
+  '2':'Closed',
+  '3':'Expired'
+}
 
 function* onChainSelected(action) {
   if (action.payload.chain === 'ethereum') {
@@ -38,8 +45,27 @@ function* onChainSelected(action) {
   }
 }
 
+function* getSwap(action) {
+  const { id } = action.payload;
+  let drizzle = yield select(state => state.drizzle.instance);
+  const AtomicSwap = drizzle.contracts.AtomicSwap;
+  const swapFields = yield call(AtomicSwap.methods.getSwap(id).call);
+  console.log('swapFields', swapFields);
+  const swap = {
+    id,
+    hashlock: swapFields.hash,
+    status: SwapStates[swapFields.states],
+    timelock: swapFields.timelock,
+    amount: new Big(swapFields.tokenValue).div(DECIMALS).valueOf(),
+    xAddress: swapFields.xAddress,
+    counterXAddress: swapFields.counterXAddress
+  }
+  console.log('swap', swap);
+  yield put(updateSwap(swap));
+}
+
 function* openSwap(action) {
-  const { dalaAmount, stellarAddress } = action.payload;
+  const { amount, xAddress, targetChain } = action.payload;
   //generate swap ID
   const swapId = ethUtil.bufferToHex(ethUtil.setLengthLeft(Crypto.randomBytes(32), 32));
 
@@ -60,27 +86,21 @@ function* openSwap(action) {
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const TestToken = drizzle.contracts.TestToken;
 
-  const transactionId = yield call(
-    AtomicSwap.methods.open(
-      swapId,
-      dalaAmount * 10 ** 18,
-      TestToken.address,
-      '0x5aeda56215b167893e80b4fe645ba6d5bab767de',
-      hashlock,
-      timelock,
-      stellarAddress
-    ).send
+  const transaction = yield call(
+    AtomicSwap.methods.open(swapId, amount * DECIMALS, TestToken.address, '0x5aeda56215b167893e80b4fe645ba6d5bab767de', hashlock, timelock, xAddress)
+      .send
   );
 
   const payload = {
     id: swapId,
-    chain: 'ethereum',
+    sourceChain: 'ethereum',
+    targetChain,
     preimage,
     hashlock,
     timelock,
-    dalaAmount,
-    stellarAddress,
-    transactionId,
+    amount,
+    xAddress,
+    transaction,
     status: 'Open'
   };
   yield put(addSwap(payload));
@@ -90,4 +110,5 @@ function* openSwap(action) {
 export function* watchSelectedChain() {
   yield takeLatest(SET_SELECTED_CHAIN, onChainSelected);
   yield takeLatest(OPEN_SWAP, openSwap);
+  yield takeLatest(GET_SWAP, getSwap);
 }

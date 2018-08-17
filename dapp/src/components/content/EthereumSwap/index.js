@@ -6,8 +6,8 @@ import { openSwap } from '../../../actions/ethereum';
 class EthereumSwap extends Component {
   constructor(props) {
     super(props);
-    this.onDalaAmountCaptured = this.onDalaAmountCaptured.bind(this);
-    this.onStellarAddressCaptured = this.onStellarAddressCaptured.bind(this);
+    this.onAmountCaptured = this.onAmountCaptured.bind(this);
+    this.onXAddressCaptured = this.onXAddressCaptured.bind(this);
     this.openSwap = this.openSwap.bind(this);
     this.onChainSelected = this.onChainSelected.bind(this);
     this.state = {
@@ -15,15 +15,15 @@ class EthereumSwap extends Component {
     }
   }
 
-  onDalaAmountCaptured(event) {
+  onAmountCaptured(event) {
     this.setState({
-      dalaAmount: event.target.value
+      amount: event.target.value
     });
   }
 
-  onStellarAddressCaptured(event) {
+  onXAddressCaptured(event) {
     this.setState({
-      stellarAddress: event.target.value
+      xAddress: event.target.value
     });
   }
 
@@ -48,7 +48,7 @@ class EthereumSwap extends Component {
           {this.props.ethereum.isLoaded && (
             <div>
               <h3>How many $DALA would you like to swap from Ethereum?</h3>
-              <input type="text" onChange={this.onDalaAmountCaptured} />
+              <input type="text" onChange={this.onAmountCaptured} />
               <h2>Target Chain</h2>
               <select defaultValue="" onChange={this.onChainSelected}>
                 <option value="" disabled>
@@ -61,7 +61,7 @@ class EthereumSwap extends Component {
           {this.state.targetChain === 'stellar' && (
             <div>
               <h3>What is your Stellar address</h3>
-              <input type="text" onChange={this.onStellarAddressCaptured} />
+              <input type="text" onChange={this.onXAddressCaptured} />
               <br />
               <button onClick={this.openSwap}>SWAP!</button>
             </div>
