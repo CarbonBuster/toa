@@ -11,9 +11,32 @@
       "name": "aws",
       "profile": "sandbox",
       "runtime": "nodejs8.10",
-      "environment": null,
-      "environmentSecrets": null,
+      "environment": {
+        "ETHEREUM_RPC_URL": "http://localhost:9545",
+        "ETHEREUM_ATOMIC_SWAP_ADDRESS": "0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f",
+        "STELLAR_DALA_DISTRIBUTION": "GBYGQ5J53NEEUOBBC5CNBX77OOM5MQKJ424A6LDYMHX5QYFSISTSLX2B",
+        "STELLAR_HORIZON_URL": "https://horizon-test.stellar.org",
+        "STELLAR_IS_TEST": true
+      },
+      "environmentSecrets": {
+        "STELLAR_DALA_DISTRIBUTION_SECRET": "/toa-server/sandbox/STELLAR_DALA_DISTRIBUTION_SECRET"
+      },
       "iamRoleStatements": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:DescribeTable",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:eu-west-1:346209687917:table/AtomicSwapEvents",
+            "arn:aws:dynamodb:eu-west-1:346209687917:table/StellarTransactions"
+          ]
+        },
         {
           "Effect": "Allow",
           "Action": "ssm:GetParameters",
@@ -28,6 +51,176 @@
         "Resources": {
           "ServerlessDeploymentBucket": {
             "Type": "AWS::S3::Bucket"
+          },
+          "OnAtomicSwapEventLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/toa-server-sandbox-onAtomicSwapEvent"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "sandbox",
+                        "toa-server",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/toa-server-sandbox-onAtomicSwapEvent:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/toa-server-sandbox-onAtomicSwapEvent:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iamRoleStatements\"][0]"
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iamRoleStatements\"][1]"
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "dynamodb:GetRecords",
+                          "dynamodb:GetShardIterator",
+                          "dynamodb:DescribeStream",
+                          "dynamodb:ListStreams"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::GetAtt": [
+                              "AtomicSwapEventsDynamoDbTable",
+                              "StreamArn"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "toa-server",
+                    "sandbox",
+                    "eu-west-1",
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "OnAtomicSwapEventLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/toa-server/sandbox/1534865607788-2018-08-21T15:33:27.788Z/toa-server.zip"
+              },
+              "FunctionName": "toa-server-sandbox-onAtomicSwapEvent",
+              "Handler": "src/ethereum/listeners/atomic-swap-events.onAtomicSwapEvent",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs8.10",
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "ETHEREUM_RPC_URL": "http://localhost:9545",
+                  "ETHEREUM_ATOMIC_SWAP_ADDRESS": "0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f",
+                  "STELLAR_DALA_DISTRIBUTION": "GBYGQ5J53NEEUOBBC5CNBX77OOM5MQKJ424A6LDYMHX5QYFSISTSLX2B",
+                  "STELLAR_HORIZON_URL": "https://horizon-test.stellar.org",
+                  "STELLAR_IS_TEST": true,
+                  "STELLAR_DALA_DISTRIBUTION_SECRET": "/toa-server/sandbox/STELLAR_DALA_DISTRIBUTION_SECRET"
+                }
+              }
+            },
+            "DependsOn": [
+              "OnAtomicSwapEventLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "OnAtomicSwapEventLambdaVersiontLQqrhT4ypC0iAIRyH047PMDVAkerJGeefVvVHXtw": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "OnAtomicSwapEventLambdaFunction"
+              },
+              "CodeSha256": "Z2JMUns9mz1sk6t3Tdgs591msTiIh2c+yZkx+toUt34="
+            }
+          },
+          "OnAtomicSwapEventEventSourceMappingDynamodbAtomicSwapEventsDynamoDbTable": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": "IamRoleLambdaExecution",
+            "Properties": {
+              "BatchSize": 10,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "AtomicSwapEventsDynamoDbTable",
+                  "StreamArn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "OnAtomicSwapEventLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "StartingPosition": "TRIM_HORIZON",
+              "Enabled": "True"
+            }
           },
           "AtomicSwapEventsDynamoDbTable": {
             "Type": "AWS::DynamoDB::Table",
@@ -54,12 +247,52 @@
                 "StreamViewType": "NEW_AND_OLD_IMAGES"
               }
             }
+          },
+          "StellarTransactionsDynamoDbTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "eventId",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "transactionType",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "eventId",
+                  "KeyType": "HASH"
+                },
+                {
+                  "AttributeName": "transactionType",
+                  "KeyType": "RANGE"
+                }
+              ],
+              "ProvisionedThroughput": {
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+              },
+              "TableName": "StellarTransactios",
+              "StreamSpecification": {
+                "StreamViewType": "NEW_AND_OLD_IMAGES"
+              }
+            }
           }
         },
         "Outputs": {
           "ServerlessDeploymentBucketName": {
             "Value": {
               "Ref": "ServerlessDeploymentBucket"
+            }
+          },
+          "OnAtomicSwapEventLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "OnAtomicSwapEventLambdaVersiontLQqrhT4ypC0iAIRyH047PMDVAkerJGeefVvVHXtw"
             }
           }
         }
@@ -79,12 +312,48 @@
             }
           }
         }
+      },
+      "vpc": {}
+    },
+    "custom": {
+      "profiles": {
+        "sandbox": {
+          "ETHEREUM_RPC_URL": "http://localhost:9545",
+          "ETHEREUM_ATOMIC_SWAP_ADDRESS": "0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f",
+          "STELLAR_DALA_DISTRIBUTION": "GBYGQ5J53NEEUOBBC5CNBX77OOM5MQKJ424A6LDYMHX5QYFSISTSLX2B",
+          "STELLAR_HORIZON_URL": "https://horizon-test.stellar.org",
+          "STELLAR_IS_TEST": true
+        }
       }
     },
     "plugins": [
       "serverless-secrets"
     ],
-    "functions": {},
+    "pluginsData": {},
+    "functions": {
+      "onAtomicSwapEvent": {
+        "handler": "src/ethereum/listeners/atomic-swap-events.onAtomicSwapEvent",
+        "events": [
+          {
+            "stream": {
+              "type": "dynamodb",
+              "arn": {
+                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"IamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][4][\"Resource\"][0]"
+              }
+            }
+          }
+        ],
+        "name": "toa-server-sandbox-onAtomicSwapEvent",
+        "environment": {
+          "STELLAR_DALA_DISTRIBUTION_SECRET": "/toa-server/sandbox/STELLAR_DALA_DISTRIBUTION_SECRET"
+        },
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs8.10",
+        "vpc": {}
+      }
+    },
     "resources": {
       "Outputs": {},
       "Resources": {
@@ -113,12 +382,47 @@
               "StreamViewType": "NEW_AND_OLD_IMAGES"
             }
           }
+        },
+        "StellarTransactionsDynamoDbTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "eventId",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "transactionType",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "eventId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "transactionType",
+                "KeyType": "RANGE"
+              }
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 1,
+              "WriteCapacityUnits": 1
+            },
+            "TableName": "StellarTransactios",
+            "StreamSpecification": {
+              "StreamViewType": "NEW_AND_OLD_IMAGES"
+            }
+          }
         }
       }
-    }
+    },
+    "artifact": "/Users/rossmcewan/Source/Dala/toa/server/.serverless/toa-server.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/toa-server/sandbox/1534339597824-2018-08-15T13:26:37.824Z",
-    "artifact": ""
+    "artifactDirectoryName": "serverless/toa-server/sandbox/1534865607788-2018-08-21T15:33:27.788Z",
+    "artifact": "toa-server.zip"
   }
 }

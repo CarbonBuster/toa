@@ -10,8 +10,8 @@ function createTableIfNotExists() {
       'amount',
       'hashlock',
       'preimage',
-      'xAddress',
-      'counterXAddress',
+      'targetAddress',
+      'holdingAddress',
       'timelock',
       'transaction',
       'status'
@@ -27,7 +27,7 @@ export async function getSwaps() {
 export async function getSwap(id) {
   createTableIfNotExists();
   let swaps = db.queryAll('swaps', {
-    id
+    query: { id }
   });
   return swaps.length && swaps[0];
 }

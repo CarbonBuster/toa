@@ -6,14 +6,15 @@
   "dependencies": {
     "aws-sdk": "^2.293.0",
     "serverless-secrets": "^3.0.0-beta.12",
+    "stellar-sdk": "^0.10.3",
     "truffle-contract": "^3.0.6",
     "web3": "0.18.4",
     "web3-provider-engine": "^14.0.6"
   },
   "devDependencies": {
+    "serverless": "^1.30.0",
     "serverless-aws-documentation": "^1.1.0",
     "serverless-plugin-cfauthorizer": "^0.2.4",
-    "serverless-plugin-custom-domain": "^2.0.0",
-    "serverless": "^1.30.0"
+    "serverless-plugin-custom-domain": "^2.0.0"
   }
 }

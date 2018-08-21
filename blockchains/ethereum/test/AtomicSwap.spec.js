@@ -16,12 +16,12 @@ contract('AtomicSwap', async accounts => {
       .add(1, 'days')
       .valueOf();
     let keypair = StellarSdk.Keypair.random();
-    let xAddress = keypair.publicKey();
+    let targetAddress = keypair.publicKey();
 
     let token = await TestToken.deployed();
     await token.approve(AtomicSwap.address, 1)
     let swap = await AtomicSwap.deployed();
-    await swap.open(swapId, 1, tokenAddress, swappee, hash, timelock, xAddress);
+    await swap.open(swapId, 1, tokenAddress, swappee, hash, timelock, targetAddress);
 
     let balance = await token.balanceOf(AtomicSwap.address);
     assert.equal(balance, tokenValue);

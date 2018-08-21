@@ -11,13 +11,50 @@ provider:
   region: eu-west-1
   runtime: nodejs8.10
   environment:
+    ETHEREUM_RPC_URL: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_RPC_URL}
+    ETHEREUM_ATOMIC_SWAP_ADDRESS: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_ATOMIC_SWAP_ADDRESS}
+    STELLAR_DALA_DISTRIBUTION: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_DISTRIBUTION}
+    STELLAR_HORIZON_URL: ${self:custom.profiles.${self:provider.profile}.STELLAR_HORIZON_URL}
+    STELLAR_IS_TEST: ${self:custom.profiles.${self:provider.profile}.STELLAR_IS_TEST}
   environmentSecrets:
+    STELLAR_DALA_DISTRIBUTION_SECRET: '/${self:service}/${self:provider.profile}/STELLAR_DALA_DISTRIBUTION_SECRET'
   iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/AtomicSwapEvents
+        - arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/StellarTransactions
+
+functions:
+  onAtomicSwapEvent:
+    handler: src/ethereum/listeners/atomic-swap-events.onAtomicSwapEvent
+    events:
+        - stream:
+            type: dynamodb
+            arn: 
+              Fn::GetAtt:
+                - AtomicSwapEventsDynamoDbTable
+                - StreamArn
 
 plugins:
   - serverless-secrets
 
+custom:
+  profiles:
+    sandbox:
+      ETHEREUM_RPC_URL: ${file(./secrets.yml):${self:provider.profile}.ethereum.rpcUrl}
+      ETHEREUM_ATOMIC_SWAP_ADDRESS: ${file(./secrets.yml):${self:provider.profile}.ethereum.atomicSwap.address}
+      STELLAR_DALA_DISTRIBUTION: ${file(./secrets.yml):${self:provider.profile}.stellar.distribution.publicKey}
+      STELLAR_HORIZON_URL: https://horizon-test.stellar.org
+      STELLAR_IS_TEST: true
 resources:
   Outputs:
   Resources:
     AtomicSwapEventsDynamoDbTable: ${file(./CloudFormation/DynamoDB/AtomicSwapEvents.yml):Table}
+    StellarTransactionsDynamoDbTable: ${file(./CloudFormation/DynamoDB/StellarTransactions.yml):Table}

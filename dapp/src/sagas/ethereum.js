@@ -11,11 +11,12 @@ import Big from 'big.js';
 const DECIMALS = 10 ** 18;
 
 const SwapStates = {
-  '0':'Invalid',
-  '1':'Open',
-  '2':'Closed',
-  '3':'Expired'
-}
+  '0': 'Invalid',
+  '1': 'Open',
+  '2': 'Closed',
+  '3': 'Expired',
+  '4': 'Accepted'
+};
 
 function* onChainSelected(action) {
   if (action.payload.chain === 'ethereum') {
@@ -57,15 +58,17 @@ function* getSwap(action) {
     status: SwapStates[swapFields.states],
     timelock: swapFields.timelock,
     amount: new Big(swapFields.tokenValue).div(DECIMALS).valueOf(),
-    xAddress: swapFields.xAddress,
-    counterXAddress: swapFields.counterXAddress
-  }
+    targetAddress: swapFields.targetAddress,
+    holdingAddress: swapFields.holdingAddress
+  };
   console.log('swap', swap);
   yield put(updateSwap(swap));
 }
 
 function* openSwap(action) {
-  const { amount, xAddress, targetChain } = action.payload;
+  console.log(action);
+  const { amount, targetAddress, targetChain } = action.payload;
+
   //generate swap ID
   const swapId = ethUtil.bufferToHex(ethUtil.setLengthLeft(Crypto.randomBytes(32), 32));
 
@@ -86,8 +89,20 @@ function* openSwap(action) {
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const TestToken = drizzle.contracts.TestToken;
 
+  //check if there is an allowance for AtomicSwap to transfer tokens on behalf of the user
+  let accounts = yield select(state => state.accounts);
+  const address = accounts[0];
+  let allowance = yield call(TestToken.methods.allowance(address, AtomicSwap.address).call);
+  console.log(allowance);
+  let ballowance = new Big(allowance).div(DECIMALS);
+  console.log('ballowance', ballowance.valueOf());
+  if(ballowance.lt(amount)){
+    alert('Need to give AtomicSwap allowance to transfer tokens on your behalf');
+    yield call(TestToken.methods.approve(AtomicSwap.address, new Big(amount).times(DECIMALS).valueOf()).send);
+  }
+
   const transaction = yield call(
-    AtomicSwap.methods.open(swapId, amount * DECIMALS, TestToken.address, '0x5aeda56215b167893e80b4fe645ba6d5bab767de', hashlock, timelock, xAddress)
+    AtomicSwap.methods.open(swapId, amount * DECIMALS, TestToken.address, '0x5aeda56215b167893e80b4fe645ba6d5bab767de', hashlock, timelock, targetChain, targetAddress)
       .send
   );
 
@@ -99,7 +114,7 @@ function* openSwap(action) {
     hashlock,
     timelock,
     amount,
-    xAddress,
+    targetAddress,
     transaction,
     status: 'Open'
   };

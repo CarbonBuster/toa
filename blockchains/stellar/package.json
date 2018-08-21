@@ -1,0 +1,9 @@
+{
+  "name": "toa-stellar",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "stellar-sdk": "^0.10.3"
+  }
+}

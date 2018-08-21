@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import logo from '../../../logo.png'
-import EthereumSwap from '../../content/EthereumSwap';
-import StellarSwap from '../../content/StellarSwap';
+import EthereumSource from '../../content/ethereum/EthereumSource';
+import StellarSource from '../../content/stellar/StellarSource';
 import PropTypes from 'prop-types';
 
 class New extends Component {
@@ -37,8 +37,8 @@ class New extends Component {
           </div>
 
           <div className="pure-u-1-1">
-            <EthereumSwap {...this.props}/>
-            <StellarSwap {...this.props}/>
+            <EthereumSource {...this.props}/>
+            <StellarSource {...this.props}/>
           </div>
         </div>
       </main>
