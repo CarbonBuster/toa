@@ -1,5 +1,5 @@
-import AtomicSwap from './../../blockchains/ethereum/build/contracts/AtomicSwap.json'
-import TestToken from './../../blockchains/ethereum/build/contracts/TestToken.json'
+import AtomicSwap from '../contracts/AtomicSwap.json'
+import DalaToken from '../contracts/DalaToken.json'
 
 const drizzleOptions = {
   web3: {
@@ -11,11 +11,11 @@ const drizzleOptions = {
   },
   contracts: [
     AtomicSwap,
-    TestToken
+    DalaToken
   ],
   events: {
     AtomicSwap: ['Open','Expire','Close'],
-    TestToken: ['Approval','Transfer']
+    DalaToken: ['Approval','Transfer']
   },
   polls: {
     accounts: 1500

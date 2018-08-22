@@ -1,0 +1,3 @@
+exports.StellarTransactionTypes = {
+    Refund: 'REFUND'
+}

@@ -33,8 +33,8 @@ function* onChainSelected(action) {
     );
 
     const address = accounts[0];
-    const TestToken = drizzle.contracts.TestToken;
-    const tokenBalance = yield call(TestToken.methods.balanceOf(address).call);
+    const DalaToken = drizzle.contracts.DalaToken;
+    const tokenBalance = yield call(DalaToken.methods.balanceOf(address).call);
     yield put(
       setDalaBalance({
         wei: tokenBalance,
@@ -87,22 +87,22 @@ function* openSwap(action) {
   //call contract
   let drizzle = yield select(state => state.drizzle.instance);
   const AtomicSwap = drizzle.contracts.AtomicSwap;
-  const TestToken = drizzle.contracts.TestToken;
+  const DalaToken = drizzle.contracts.DalaToken;
 
   //check if there is an allowance for AtomicSwap to transfer tokens on behalf of the user
   let accounts = yield select(state => state.accounts);
   const address = accounts[0];
-  let allowance = yield call(TestToken.methods.allowance(address, AtomicSwap.address).call);
+  let allowance = yield call(DalaToken.methods.allowance(address, AtomicSwap.address).call);
   console.log(allowance);
   let ballowance = new Big(allowance).div(DECIMALS);
   console.log('ballowance', ballowance.valueOf());
   if(ballowance.lt(amount)){
     alert('Need to give AtomicSwap allowance to transfer tokens on your behalf');
-    yield call(TestToken.methods.approve(AtomicSwap.address, new Big(amount).times(DECIMALS).valueOf()).send);
+    yield call(DalaToken.methods.approve(AtomicSwap.address, new Big(amount).times(DECIMALS).valueOf()).send);
   }
 
   const transaction = yield call(
-    AtomicSwap.methods.open(swapId, amount * DECIMALS, TestToken.address, '0x5aeda56215b167893e80b4fe645ba6d5bab767de', hashlock, timelock, targetChain, targetAddress)
+    AtomicSwap.methods.open(swapId, amount * DECIMALS, DalaToken.address, '0x5aeda56215b167893e80b4fe645ba6d5bab767de', hashlock, timelock, targetChain, targetAddress)
       .send
   );
 

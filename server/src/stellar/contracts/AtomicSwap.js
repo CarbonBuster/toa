@@ -1,5 +1,6 @@
 const Crypto = require('crypto');
 const Stellar = require('stellar-sdk');
+const Big = require('big.js');
 
 const DISTRIBUTION_REFUND_DELAY = 60 * 60;
 const BASE_RESERVE = 0.5;
@@ -16,7 +17,7 @@ class AtomicSwap {
   constructor(params = {}) {
     this.distributionRefundDelay = params.distributionRefundDelay || DISTRIBUTION_REFUND_DELAY;
     this.baseReserve = params.baseReserve || BASE_RESERVE;
-    this.dalaAsset = params.dalaAsset;
+    this.dalaAsset = new Stellar.Asset(params.dalaAssetCode, params.dalaAssetIssuer);
     this.server = params.server;
   }
 
@@ -57,7 +58,7 @@ class AtomicSwap {
       .addOperation(
         Stellar.Operation.createAccount({
           destination: holdingAccount,
-          startingBalance: 5 * this.baseReserve, // 5 = 2 + signer hashx + signer bob + asset trustline
+          startingBalance: new Big(8 * this.baseReserve).toFixed(7), // 5 = 2 + signer hashx + signer bob + asset trustline
           source: distributionAccount
         })
       )
@@ -111,6 +112,7 @@ class AtomicSwap {
 
   async buildMoveAssetToHoldingAccountTransaction({ distributionAccount, holdingAccount, swapSize }) {
     const distribution = await this.server.loadAccount(distributionAccount);
+    distribution.incrementSequenceNumber();
     const moveTx = new Stellar.TransactionBuilder(distribution)
       .addOperation(
         Stellar.Operation.payment({

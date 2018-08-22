@@ -9,6 +9,7 @@
   "devDependencies": {
     "ethereumjs-util": "^5.2.0",
     "moment": "^2.22.2",
-    "stellar-sdk": "^0.10.2"
+    "stellar-sdk": "^0.10.2",
+    "truffle-hdwallet-provider": "^0.0.6"
   }
 }

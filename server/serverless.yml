@@ -16,6 +16,8 @@ provider:
     STELLAR_DALA_DISTRIBUTION: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_DISTRIBUTION}
     STELLAR_HORIZON_URL: ${self:custom.profiles.${self:provider.profile}.STELLAR_HORIZON_URL}
     STELLAR_IS_TEST: ${self:custom.profiles.${self:provider.profile}.STELLAR_IS_TEST}
+    STELLAR_DALA_ASSET_CODE: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_ASSET_CODE}
+    STELLAR_DALA_ASSET_ISSUER: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_ASSET_ISSUER}
   environmentSecrets:
     STELLAR_DALA_DISTRIBUTION_SECRET: '/${self:service}/${self:provider.profile}/STELLAR_DALA_DISTRIBUTION_SECRET'
   iamRoleStatements:
@@ -34,6 +36,7 @@ provider:
 functions:
   onAtomicSwapEvent:
     handler: src/ethereum/listeners/atomic-swap-events.onAtomicSwapEvent
+    timeout: 120
     events:
         - stream:
             type: dynamodb
@@ -51,8 +54,10 @@ custom:
       ETHEREUM_RPC_URL: ${file(./secrets.yml):${self:provider.profile}.ethereum.rpcUrl}
       ETHEREUM_ATOMIC_SWAP_ADDRESS: ${file(./secrets.yml):${self:provider.profile}.ethereum.atomicSwap.address}
       STELLAR_DALA_DISTRIBUTION: ${file(./secrets.yml):${self:provider.profile}.stellar.distribution.publicKey}
-      STELLAR_HORIZON_URL: https://horizon-test.stellar.org
-      STELLAR_IS_TEST: true
+      STELLAR_HORIZON_URL: ${file(./secrets.yml):${self:provider.profile}.stellar.horizonUrl}
+      STELLAR_IS_TEST: ${file(./secrets.yml):${self:provider.profile}.stellar.isTest}
+      STELLAR_DALA_ASSET_CODE: ${file(./secrets.yml):${self:provider.profile}.stellar.dala.code}
+      STELLAR_DALA_ASSET_ISSUER: ${file(./secrets.yml):${self:provider.profile}.stellar.dala.issuer}
 resources:
   Outputs:
   Resources:

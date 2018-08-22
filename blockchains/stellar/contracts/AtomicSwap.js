@@ -9,10 +9,10 @@ class AtomicSwap {
     let horizonUrl;
     if (params.test) {
       Stellar.Network.useTestNetwork();
-      horizonUrl = params.horizonUrl || 'https://horizon-testnet.stellar.org/';
+      horizonUrl = params.horizonUrl || 'https://horizon-testnet.stellar.org';
     } else {
       Stellar.Network.usePublicNetwork();
-      horizonUrl = params.horizonUrl || 'https://horizon.stellar.org/';
+      horizonUrl = params.horizonUrl || 'https://horizon.stellar.org';
     }
     this.distributionRefundDelay = params.distributionRefundDelay || DISTRIBUTION_REFUND_DELAY;
     this.baseReserve = params.baseReserve || BASE_RESERVE;
