@@ -99,6 +99,7 @@ contract AtomicSwap {
 
     function accept(bytes32 _swapID, string _holdingAddress) public onlyOpenSwaps(_swapID) {
         swaps[_swapID].holdingAddress = _holdingAddress;
+        swapStates[_swapID] = States.ACCEPTED;
         emit Accept(_swapID, _holdingAddress);
     }
 
