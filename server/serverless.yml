@@ -14,6 +14,7 @@ provider:
     ETHEREUM_RPC_URL: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_RPC_URL}
     ETHEREUM_ATOMIC_SWAP_ADDRESS: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_ATOMIC_SWAP_ADDRESS}
     ETHEREUM_DEFAULT_GAS: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_DEFAULT_GAS}
+    ETHEREUM_SWAPPEE: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_SWAPPEE}
     STELLAR_DALA_DISTRIBUTION: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_DISTRIBUTION}
     STELLAR_HORIZON_URL: ${self:custom.profiles.${self:provider.profile}.STELLAR_HORIZON_URL}
     STELLAR_IS_TEST: ${self:custom.profiles.${self:provider.profile}.STELLAR_IS_TEST}
@@ -33,19 +34,19 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
       Resource:
-        - arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/AtomicSwapEvents
+        - arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/ToaEvents
         - arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/StellarTransactions
 
 functions:
-  onAtomicSwapEvent:
-    handler: src/ethereum/listeners/atomic-swap-events.onAtomicSwapEvent
+  onToaEvent:
+    handler: src/ethereum/listeners/atomic-swap-events.onToaEvent
     timeout: 120
     events:
         - stream:
             type: dynamodb
             arn: 
               Fn::GetAtt:
-                - AtomicSwapEventsDynamoDbTable
+                - ToaEventsDynamoDbTable
                 - StreamArn
 
 plugins:
@@ -57,6 +58,7 @@ custom:
       ETHEREUM_RPC_URL: ${file(./secrets.yml):${self:provider.profile}.ethereum.rpcUrl}
       ETHEREUM_ATOMIC_SWAP_ADDRESS: ${file(./secrets.yml):${self:provider.profile}.ethereum.atomicSwap.address}
       ETHEREUM_DEFAULT_GAS: 4500000
+      ETHEREUM_SWAPPEE: ${file(./secrets.yml):${self:provider.profile}.ethereum.swappee.address}
       STELLAR_DALA_DISTRIBUTION: ${file(./secrets.yml):${self:provider.profile}.stellar.distribution.publicKey}
       STELLAR_HORIZON_URL: ${file(./secrets.yml):${self:provider.profile}.stellar.horizonUrl}
       STELLAR_IS_TEST: ${file(./secrets.yml):${self:provider.profile}.stellar.isTest}
@@ -65,5 +67,5 @@ custom:
 resources:
   Outputs:
   Resources:
-    AtomicSwapEventsDynamoDbTable: ${file(./CloudFormation/DynamoDB/AtomicSwapEvents.yml):Table}
+    ToaEventsDynamoDbTable: ${file(./CloudFormation/DynamoDB/ToaEvents.yml):Table}
     StellarTransactionsDynamoDbTable: ${file(./CloudFormation/DynamoDB/StellarTransactions.yml):Table}

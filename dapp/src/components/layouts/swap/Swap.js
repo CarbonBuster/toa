@@ -5,12 +5,27 @@ import PropTypes from 'prop-types';
 class Swap extends Component {
   constructor(props, context) {
     super(props);
+    this.onStellarSecretChanged = this.onStellarSecretChanged.bind(this);
+    this.claimStellar = this.claimStellar.bind(this);
+    this.state = {};
   }
 
   componentDidMount() {
     let { id } = this.props.routeParams;
     console.log('id', id);
     this.props.getSwap(id);
+  }
+
+  onStellarSecretChanged(event){
+    this.setState({
+      stellarSecret: event.target.value
+    });
+  }
+
+  claimStellar(){
+    let swap = this.props.selectedSwap;
+    let secret = this.state.stellarSecret;
+    this.props.claimStellar(swap.id, secret);
   }
 
   render() {
@@ -26,8 +41,19 @@ class Swap extends Component {
             <p>{`Amount: đ ${this.props.selectedSwap.amount}`}</p>
             <p>{`Source Chain: ${this.props.selectedSwap.sourceChain}`}</p>
             <p>{`Target Chain: ${this.props.selectedSwap.targetChain}`}</p>
+            <p>{`Target Address: ${this.props.selectedSwap.targetAddress}`}</p>
             <p>{`Timelock: ${timelock}`}</p>
             <p>{`Hashlock: ${this.props.selectedSwap.hashlock}`}</p>
+            <p>{`Status: ${this.props.selectedSwap.status}`}</p>
+            <p>{`Holding Address: ${this.props.selectedSwap.holdingAddress}`}</p>
+            <p></p>
+            {this.props.selectedSwap.targetChain === 'stellar' && this.props.selectedSwap.status === 'Accepted' && (
+              <div>
+                <p>Stellar Secret</p>
+                <input type="password" name="stellarSecret" onChange={this.onStellarSecretChanged}/>
+                <p><button onClick={this.claimStellar}>Claim</button></p>
+              </div>
+            )}
           </div>
         </main>
       );

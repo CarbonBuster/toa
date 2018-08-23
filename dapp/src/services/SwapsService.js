@@ -41,9 +41,12 @@ export async function addSwap(swap) {
 export async function updateSwap(swap) {
   createTableIfNotExists();
   db.update('swaps', { id: swap.id }, row => {
-    return {
+    let updated = {
       ...row,
       ...swap
     };
+    console.log('updated values', updated);
+    return updated;
   });
+  db.commit();
 }

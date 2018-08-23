@@ -3,7 +3,8 @@ exports.Statuses = {
     Open: '1',
     Closed: '2',
     Expired: '3',
-    Accepted: '4'
+    Accepted: '4',
+    Close: '5'
 }
 
 exports.Chains = {

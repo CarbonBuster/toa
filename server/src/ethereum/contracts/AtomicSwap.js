@@ -24,7 +24,7 @@ class AtomicSwap {
 
     this.engine = new ProviderEngine();
     this.engine.addProvider(new FilterSubprovider());
-    
+
     if (params.signerAddress && params.signerPrivateKey) {
       this.engine.addProvider(
         new HookedWalletEthTxSubprovider({
@@ -53,8 +53,28 @@ class AtomicSwap {
     this.swap = await this.contract.at(this.contractAddress);
   }
 
+  on(eventName, watcher){
+    let event = this.swap[eventName] && this.swap[eventName]();
+    return event && event.watch(watcher);
+  }
+
   onOpen(watcher) {
     let event = this.swap.Open();
+    event.watch(watcher);
+  }
+
+  onExpire(watcher) {
+    let event = this.swap.Expire();
+    event.watch(watcher);
+  }
+
+  onClose(watcher) {
+    let event = this.swap.Close();
+    event.watch(watcher);
+  }
+
+  onAccept(watcher) {
+    let event = this.swap.Accept();
     event.watch(watcher);
   }
 

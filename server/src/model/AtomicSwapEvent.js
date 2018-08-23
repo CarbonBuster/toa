@@ -32,7 +32,7 @@ class AtomicSwapEvent {
     return this;
   }
 
-  withXAddress(targetAddress) {
+  withTargetAddress(targetAddress) {
     this.targetAddress = targetAddress;
     return this;
   }
@@ -52,9 +52,50 @@ class AtomicSwapEvent {
     return this;
   }
 
-  withCounterXAddress(holdingAddress){
+  withHoldingAddress(holdingAddress){
     this.holdingAddress = holdingAddress;
     return this;
+  }
+
+  withPreimage(preimage){
+    this.preimage = preimage;
+    return this;
+  }
+
+  static loadFrom(swap){
+    return new AtomicSwapEvent()
+      .withId(swap.id)
+      .withTimelock(swap.timelock)
+      .withValue(swap.value)
+      .withTokenAddress(swap.tokenAddress)
+      .withSwappee(swap.swappee)
+      .withHash(swap.hash)
+      .withTargetAddress(swap.targetAddress)
+      .withStatus(swap.status)
+      .withEvent(swap.event)
+      .withTargetChain(swap.targetChain)
+      .withHoldingAddress(swap.holdingAddress)
+      .withPreimage(swap.preimage);
+  }
+
+  incrementAcceptCounter(count){
+    return documentClient.update({
+      TableName: 'ToaEvents',
+      Key: {
+        id: this.id,
+        status: this.status
+      },
+      UpdateExpression: 'ADD #acceptCounter :increment',
+      ConditionExpression: 'attribute_exists(#id) and attribute_exists(#status)',
+      ExpressionAttributeNames: {
+        '#acceptCounter': 'acceptCounter',
+        '#id':'id',
+        '#status':'status'
+      },
+      ExpressionAttributeValues: {
+        ':increment': count
+      }
+    }).promise();
   }
 
   save() {
@@ -69,15 +110,17 @@ class AtomicSwapEvent {
       status: this.status,
       event: this.event,
       targetChain: this.targetChain,
-      holdingAddress: this.holdingAddress
+      holdingAddress: this.holdingAddress,
+      preimage: this.preimage
     };
     return documentClient
       .put({
-        TableName: 'AtomicSwapEvents',
+        TableName: 'ToaEvents',
         Item,
-        ConditionExpression: 'attribute_not_exists(#id)',
+        ConditionExpression: 'attribute_not_exists(#id) and attribute_not_exists(#status)',
         ExpressionAttributeNames: {
-          '#id': 'id'
+          '#id': 'id',
+          '#status': 'status'
         }
       })
       .promise()
