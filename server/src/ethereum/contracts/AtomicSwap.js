@@ -95,12 +95,10 @@ class AtomicSwap {
   }
 
   async close(id, preimage) {
-    console.log('calling close', id, preimage);
-    let transaction = await this.swap.close(id, preimage, {
+    await this.swap.close(id, preimage, {
       from: this.signerAddress,
       gas: this.gas
     });
-    console.log('closed', transaction);
   }
 }
 
