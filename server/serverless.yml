@@ -38,9 +38,19 @@ provider:
         - arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/StellarTransactions
 
 functions:
-  onToaEvent:
+  onEthereumToaEvent:
     handler: src/ethereum/listeners/atomic-swap-events.onToaEvent
-    timeout: 120
+    timeout: 300
+    events:
+        - stream:
+            type: dynamodb
+            arn: 
+              Fn::GetAtt:
+                - ToaEventsDynamoDbTable
+                - StreamArn
+  onStellarToaEvent:
+    handler: src/stellar/listeners/atomic-swap-events.onToaEvent
+    timeout: 300
     events:
         - stream:
             type: dynamodb

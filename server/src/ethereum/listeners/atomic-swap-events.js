@@ -5,6 +5,24 @@ const { UnhandledChainError } = require('../../lib/errors');
 const { performSwap } = require('../../stellar');
 const AtomicSwap = require('../contracts/AtomicSwap');
 
+async function performTargetChainSwap(_swap, swap) {
+  async function accept() {
+    const { holdingAddress } = await performSwap(_swap);
+    return swap.accept(_swap.id, holdingAddress);
+  }
+
+  switch (_swap.targetChain) {
+    case Chains.Stellar:
+      return accept();
+    default:
+      throw new UnhandledChainError(swap.targetChain);
+  }
+}
+
+async function closeSwap(_swap, swap) {
+  return swap.close(_swap.id, _swap.preimage);
+}
+
 module.exports.onToaEvent = async event => {
   await secretsClient.load();
   const rpcUrl = process.env.ETHEREUM_RPC_URL;
@@ -21,28 +39,17 @@ module.exports.onToaEvent = async event => {
     gas
   });
   await swap.load();
-  let promises = event.Records.filter(record => record.eventName == 'INSERT').map(record => {
-    let _swap = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
-    switch (_swap.status) {
+  const promises = event.Records.filter(record => record.eventName === 'INSERT').map(record => {
+    const atomicSwap = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
+    switch (atomicSwap.status) {
       case Statuses.Open:
-        if(_swap.swappee !== swappee) return;//only handle the 'Open' events where we are the swappee
-        return performTargetChainSwap(_swap, swap);
+        if (atomicSwap.swappee !== swappee) return Promise.resolve();
+        return performTargetChainSwap(atomicSwap, swap);
+      case Statuses.Close:
+        return closeSwap(atomicSwap, swap);
       default:
-        return;
+        return Promise.resolve();
     }
   });
   return Promise.all(promises);
 };
-
-async function performTargetChainSwap(_swap, swap) {
-  switch (_swap.targetChain) {
-    case Chains.Stellar:
-      let { holdingAddress } = await performSwap(_swap);
-      await swap.accept(_swap.id, holdingAddress);
-      //need to start listening to transactions on this holding address OR the target address
-      //maybe write an event to start listening here OR let the state change listener do it OR both for redundancy
-      break;
-    default:
-      throw new UnhandledChainError(swap.targetChain);
-  }
-}

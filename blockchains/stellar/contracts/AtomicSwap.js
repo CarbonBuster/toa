@@ -20,7 +20,7 @@ class AtomicSwap {
     this.server = new Stellar.Server(horizonUrl);
   }
 
-  makeHashlock() {
+  static makeHashlock() {
     const preimage = Crypto.randomBytes(32);
     const h = Crypto.createHash('sha256');
     h.update(preimage);
@@ -28,7 +28,7 @@ class AtomicSwap {
     return { preimage, hashlock };
   }
 
-  makeHoldingKeys() {
+  static makeHoldingKeys() {
     const holdingKeys = Stellar.Keypair.random();
     return { holdingKeys };
   }

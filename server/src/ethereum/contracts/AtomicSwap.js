@@ -18,8 +18,8 @@ class AtomicSwap {
     this.signerAddress = params.signerAddress;
     this.gas = params.gas;
 
-    let rpcUrl = params.rpcUrl;
-    this.contractAddress = params.contractAddress;
+    const { rpcUrl, contractAddress } = params;
+    this.contractAddress = contractAddress;
     this.contract = TruffleContract(contract);
 
     this.engine = new ProviderEngine();
@@ -28,14 +28,8 @@ class AtomicSwap {
     if (params.signerAddress && params.signerPrivateKey) {
       this.engine.addProvider(
         new HookedWalletEthTxSubprovider({
-          getAccounts: cb => {
-            console.log('getAccounts');
-            return cb(null, [params.signerAddress]);
-          },
-          getPrivateKey: (address, cb) => {
-            console.log('getPrivateKey');
-            cb(null, new Buffer(params.signerPrivateKey, 'hex'));
-          }
+          getAccounts: cb => cb(null, [params.signerAddress]),
+          getPrivateKey: (address, cb) => cb(null, address === params.signerAddress && Buffer.from(params.signerPrivateKey, 'hex'))
         })
       );
     }
@@ -53,33 +47,33 @@ class AtomicSwap {
     this.swap = await this.contract.at(this.contractAddress);
   }
 
-  on(eventName, watcher){
-    let event = this.swap[eventName] && this.swap[eventName]();
+  on(eventName, watcher) {
+    const event = this.swap[eventName] && this.swap[eventName]();
     return event && event.watch(watcher);
   }
 
   onOpen(watcher) {
-    let event = this.swap.Open();
+    const event = this.swap.Open();
     event.watch(watcher);
   }
 
   onExpire(watcher) {
-    let event = this.swap.Expire();
+    const event = this.swap.Expire();
     event.watch(watcher);
   }
 
   onClose(watcher) {
-    let event = this.swap.Close();
+    const event = this.swap.Close();
     event.watch(watcher);
   }
 
   onAccept(watcher) {
-    let event = this.swap.Accept();
+    const event = this.swap.Accept();
     event.watch(watcher);
   }
 
   async getSwap(id) {
-    let [timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress] = await this.swap.getSwap(id);
+    const [timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress] = await this.swap.getSwap(id);
     return {
       timelock,
       value,
@@ -94,19 +88,19 @@ class AtomicSwap {
   }
 
   async accept(id, holdingAddress) {
-    try {
-      console.log('this.swap', this.swap);
-      console.log('this.swap.accept', this.swap.accept);
-      console.log('id', id);
-      console.log('holdingAddress', holdingAddress);
-      await this.swap.accept(id, holdingAddress, {
-        from: this.signerAddress,
-        gas: this.gas
-      });
-    } catch (error) {
-      console.log('accept.error', error);
-      //throw error;
-    }
+    await this.swap.accept(id, holdingAddress, {
+      from: this.signerAddress,
+      gas: this.gas
+    });
+  }
+
+  async close(id, preimage) {
+    console.log('calling close', id, preimage);
+    let transaction = await this.swap.close(id, preimage, {
+      from: this.signerAddress,
+      gas: this.gas
+    });
+    console.log('closed', transaction);
   }
 }
 

@@ -1,7 +1,8 @@
 const AWS = require('aws-sdk');
+
 const documentClient = new AWS.DynamoDB.DocumentClient({ convertEmptyValues: true, region: process.AWS_REGION || 'eu-west-1' });
 
-class AtomicSwapEvent {
+class ToaEvent {
   withId(id) {
     this.id = id;
     return this;
@@ -47,23 +48,23 @@ class AtomicSwapEvent {
     return this;
   }
 
-  withTargetChain(targetChain){
+  withTargetChain(targetChain) {
     this.targetChain = targetChain;
     return this;
   }
 
-  withHoldingAddress(holdingAddress){
+  withHoldingAddress(holdingAddress) {
     this.holdingAddress = holdingAddress;
     return this;
   }
 
-  withPreimage(preimage){
+  withPreimage(preimage) {
     this.preimage = preimage;
     return this;
   }
 
-  static loadFrom(swap){
-    return new AtomicSwapEvent()
+  static loadFrom(swap) {
+    return new ToaEvent()
       .withId(swap.id)
       .withTimelock(swap.timelock)
       .withValue(swap.value)
@@ -78,28 +79,30 @@ class AtomicSwapEvent {
       .withPreimage(swap.preimage);
   }
 
-  incrementAcceptCounter(count){
-    return documentClient.update({
-      TableName: 'ToaEvents',
-      Key: {
-        id: this.id,
-        status: this.status
-      },
-      UpdateExpression: 'ADD #acceptCounter :increment',
-      ConditionExpression: 'attribute_exists(#id) and attribute_exists(#status)',
-      ExpressionAttributeNames: {
-        '#acceptCounter': 'acceptCounter',
-        '#id':'id',
-        '#status':'status'
-      },
-      ExpressionAttributeValues: {
-        ':increment': count
-      }
-    }).promise();
+  incrementAcceptCounter(count) {
+    return documentClient
+      .update({
+        TableName: 'ToaEvents',
+        Key: {
+          id: this.id,
+          status: this.status
+        },
+        UpdateExpression: 'ADD #acceptCounter :increment',
+        ConditionExpression: 'attribute_exists(#id) and attribute_exists(#status)',
+        ExpressionAttributeNames: {
+          '#acceptCounter': 'acceptCounter',
+          '#id': 'id',
+          '#status': 'status'
+        },
+        ExpressionAttributeValues: {
+          ':increment': count
+        }
+      })
+      .promise();
   }
 
   save() {
-    let Item = {
+    const Item = {
       id: this.id,
       timelock: this.timelock,
       value: this.value,
@@ -132,4 +135,4 @@ class AtomicSwapEvent {
   }
 }
 
-module.exports = AtomicSwapEvent;
+module.exports = ToaEvent;

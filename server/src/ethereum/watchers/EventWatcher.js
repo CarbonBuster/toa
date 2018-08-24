@@ -1,4 +1,4 @@
-const AtomicSwapEvent = require('../../model/AtomicSwapEvent');
+const ToaEvent = require('../../model/ToaEvent');
 const AtomicSwap = require('../contracts/AtomicSwap');
 
 class EventWatcher {
@@ -24,7 +24,7 @@ class EventWatcher {
         args: { _swapID }
       } = event;
       let { timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress } = await this.swap.getSwap(_swapID);
-      let swapEvent = new AtomicSwapEvent()
+      let swapEvent = new ToaEvent()
         .withId(_swapID)
         .withTimelock(timelock.toString())
         .withValue(value.toString())

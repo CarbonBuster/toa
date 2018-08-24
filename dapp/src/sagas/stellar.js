@@ -1,10 +1,11 @@
 import { CLAIM } from '../actions/stellar';
-import { call, takeEvery } from 'redux-saga/effects';
+import { call, takeEvery, put } from 'redux-saga/effects';
+import { push } from 'react-router-redux';
 import AtomicSwap from '../lib/stellar/AtomicSwap';
 import * as SwapsService from '../services/SwapsService';
 import Stellar from 'stellar-sdk';
 import server from '../lib/stellar/Server';
-console.log('SERVER', server);
+
 const swap = new AtomicSwap({
   server,
   dalaAssetCode: process.env.REACT_APP_STELLAR_DALA_ASSET_CODE,
@@ -31,6 +32,7 @@ function* onClaim(action) {
     }
     throw error;
   }
+  yield put(push('/'));
 }
 
 export function* watchClaim() {

@@ -18,7 +18,6 @@ export default class AtomicSwap {
     this.distributionRefundDelay = params.distributionRefundDelay || DISTRIBUTION_REFUND_DELAY;
     this.baseReserve = params.baseReserve || BASE_RESERVE;
     if (params.dalaAssetCode && params.dalaAssetIssuer) {
-      console.log('creating dalaAsset');
       this.dalaAsset = new Stellar.Asset(params.dalaAssetCode, params.dalaAssetIssuer);
     }
     this.server = params.server;
@@ -137,7 +136,6 @@ export default class AtomicSwap {
 
   async buildClaimTransaction({ preimage, depositorAccount, holdingAccount, swapSize }) {
     const depositor = await this.server.loadAccount(depositorAccount);
-    // depositor.incrementSequenceNumber();
     const claimTx = new Stellar.TransactionBuilder(depositor)
       .addOperation(
         Stellar.Operation.payment({
