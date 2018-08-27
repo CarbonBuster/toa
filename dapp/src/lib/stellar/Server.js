@@ -1,5 +1,3 @@
-console.log(process.env.REACT_APP_STELLAR_HORIZON_URL);
-console.log(process.env.REACT_APP_STELLAR_IS_TEST);
 const StellarSdk = require('stellar-sdk');
 let horizonUrl = process.env.REACT_APP_STELLAR_HORIZON_URL;
 if (process.env.REACT_APP_STELLAR_IS_TEST) {

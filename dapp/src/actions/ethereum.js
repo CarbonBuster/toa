@@ -1,8 +1,19 @@
-export const SET_ETHER_BALANCE = 'SET_ETHER_BALANCE';
-export const SET_DALA_BALANCE = 'SET_DALA_BALANCE';
-export const SET_LOADED = 'SET_LOADED';
+export const SET_ETHER_BALANCE = 'ETHEREUM_SET_SET_ETHER_BALANCE';
+export const SET_DALA_BALANCE = 'ETHEREUM_SET_SET_DALA_BALANCE';
+export const SET_LOADED = 'ETHEREUM_SET_LOADED';
+export const CLAIM = 'ETHEREUM_CLAIM';
 export const OPEN_SWAP = 'ETHEREUM_OPEN_SWAP';
 export const GET_SWAP = 'ETHEREUM_GET_SWAP';
+export const PREPARE_SWAP = 'ETHEREUM_PREPARE_SWAP';
+export const SET_ADDRESS = 'ETHEREUM_SET_ADDRESS';
+export const SET_NETWORK = 'ETHEREUM_SET_NETWORK';
+
+export function setAddress(address) {
+  return {
+    type: SET_ADDRESS,
+    payload: { address }
+  };
+}
 
 export function setEtherBalance(balance) {
   return {
@@ -42,5 +53,26 @@ export function openSwap(payload) {
   return {
     type: OPEN_SWAP,
     payload
+  };
+}
+
+export function prepareSwap(payload) {
+  return {
+    type: PREPARE_SWAP,
+    payload
+  };
+}
+
+export function claim(swapId, secret) {
+  return {
+    type: CLAIM,
+    payload: { swapId, secret }
+  };
+}
+
+export function setNetwork(network) {
+  return {
+    type: SET_NETWORK,
+    payload: { network }
   };
 }

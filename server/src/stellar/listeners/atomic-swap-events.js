@@ -13,16 +13,17 @@ async function checkTransactions(_swap) {
     .forAccount(_swap.holdingAddress)
     .order('desc')
     .call();
-  const filtered = transactions.records.map(trx => new Stellar.Transaction(trx.envelope_xdr)).filter(trx => {
-    return (
-      trx.signatures.length === 2 &&
-      trx.operations.length === 1 &&
-      trx.operations.length &&
-      trx.operations[0].type === 'payment' &&
-      trx.operations[0].source === _swap.holdingAddress &&
-      trx.operations[0].destination === _swap.targetAddress
+  const filtered = transactions.records
+    .map(trx => new Stellar.Transaction(trx.envelope_xdr))
+    .filter(
+      trx =>
+        trx.signatures.length === 2 &&
+        trx.operations.length === 1 &&
+        trx.operations.length &&
+        trx.operations[0].type === 'payment' &&
+        trx.operations[0].source === _swap.holdingAddress &&
+        trx.operations[0].destination === _swap.targetAddress
     );
-  });
   const transaction = filtered.length && filtered[0];
   if (transaction) {
     const hashx = transaction.signatures[0]._attributes.signature; //eslint-disable-line

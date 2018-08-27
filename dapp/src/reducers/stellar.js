@@ -1,39 +1,27 @@
-import { SET_DALA_BALANCE, SET_ETHER_BALANCE, SET_LOADED, SET_ADDRESS, SET_NETWORK } from '../actions/ethereum';
+import { SET_DALA_BALANCE, SET_LOADED, SET_LUMEN_BALANCE } from '../actions/stellar';
 
 const initialState = {
-  address: '',
-  network: {},
   dalaBalance: {},
-  etherBalance: {},
+  lumenBalance: {},
   isLoaded: false
 };
 
 export default (state = initialState, action = {}) => {
   switch (action.type) {
-    case SET_ADDRESS:
-      return {
-        ...state,
-        address: action.payload.address
-      };
     case SET_DALA_BALANCE:
       return {
         ...state,
         dalaBalance: action.payload.balance
-      };
-    case SET_ETHER_BALANCE:
-      return {
-        ...state,
-        etherBalance: action.payload.balance
       };
     case SET_LOADED:
       return {
         ...state,
         isLoaded: action.payload.isLoaded
       };
-    case SET_NETWORK:
+    case SET_LUMEN_BALANCE:
       return {
         ...state,
-        network: action.payload.network
+        lumenBalance: action.payload.balance
       };
     default:
       return state;

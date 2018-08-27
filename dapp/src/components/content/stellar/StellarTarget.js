@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import StellarSdk from 'stellar-sdk';
 
-export default class StellarSource extends Component {
+export default class StellarTarget extends Component {
   constructor(props) {
     super(props);
     this.validateStellarAddress = this.validateStellarAddress.bind(this);
@@ -21,7 +21,7 @@ export default class StellarSource extends Component {
     return (
       <div>
         <h3>What is your Stellar address</h3>
-        <input type="text" onChange={this.validateStellarAddress} onBlur={this.props.onXAddressCaptured} />
+        <input type="text" onChange={this.validateStellarAddress} onBlur={this.props.onTargetAddressCaptured} />
         {!this.state.isValidStellarAddress && <div style={{ color: 'red' }}>Stellar address is invalid</div>}
         <div>{this.state.isValidStellarAddress && <button onClick={this.props.openSwap}>SWAP!</button>}</div>
       </div>

@@ -8,7 +8,7 @@ class EthereumSource extends Component {
   constructor(props) {
     super(props);
     this.onAmountCaptured = this.onAmountCaptured.bind(this);
-    this.onXAddressCaptured = this.onXAddressCaptured.bind(this);
+    this.onTargetAddressCaptured = this.onTargetAddressCaptured.bind(this);
     this.openSwap = this.openSwap.bind(this);
     this.onChainSelected = this.onChainSelected.bind(this);
     this.state = {
@@ -23,7 +23,7 @@ class EthereumSource extends Component {
     });
   }
 
-  onXAddressCaptured(event) {
+  onTargetAddressCaptured(event) {
     this.setState({
       targetAddress: event.target.value
     });
@@ -43,6 +43,10 @@ class EthereumSource extends Component {
     if (this.props.chains.selectedChain === 'ethereum')
       return (
         <div>
+          <h3>Address</h3>
+          {this.props.ethereum.address}
+          <h3>Ethereum Network</h3>
+          {this.props.ethereum.network.name}
           <h3>Current Balances</h3>
           {this.props.ethereum.etherBalance.formatted}
           <br />
@@ -64,7 +68,7 @@ class EthereumSource extends Component {
               </select>
             </div>
           )}
-          {this.state.targetChain === 'stellar' && <StellarTarget onXAddressCaptured={this.onXAddressCaptured} openSwap={this.openSwap} />}
+          {this.state.targetChain === 'stellar' && <StellarTarget onTargetAddressCaptured={this.onTargetAddressCaptured} openSwap={this.openSwap} />}
         </div>
       );
     return <div />;

@@ -5,6 +5,7 @@ import web3 from './web3';
 import drizzle from './drizzle';
 import ethereum from './ethereum';
 import swaps from './swaps';
+import stellar from './stellar';
 import {routerReducer} from 'react-router-redux/lib'
 
 const reducer = combineReducers({
@@ -13,6 +14,7 @@ const reducer = combineReducers({
   drizzle,
   ethereum,
   swaps,
+  stellar,
   routing: routerReducer,
   ...drizzleReducers
 });
