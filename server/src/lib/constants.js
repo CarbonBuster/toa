@@ -4,7 +4,8 @@ exports.Statuses = {
     Closed: '2',
     Expired: '3',
     Accepted: '4',
-    Close: '5'
+    Prepared: '5',
+    Close: '100'
 }
 
 exports.Chains = {

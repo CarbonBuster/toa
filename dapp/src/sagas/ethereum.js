@@ -1,14 +1,5 @@
-import {
-  setDalaBalance,
-  setEtherBalance,
-  setLoaded,
-  setAddress,
-  setNetwork,
-  OPEN_SWAP,
-  GET_SWAP,
-  PREPARE_SWAP,
-} from '../actions/ethereum';
-import { addSwap, updateSwap } from '../actions/swaps';
+import { setDalaBalance, setEtherBalance, setLoaded, setAddress, setNetwork, OPEN_SWAP, GET_SWAP, PREPARE_SWAP } from '../actions/ethereum';
+import { addSwap, updateSwap, updateSwapTransaction } from '../actions/swaps';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import { push } from 'react-router-redux';
 import ethUtil from 'ethereumjs-util';
@@ -37,7 +28,7 @@ const Networks = {
 const Operations = {
   Open: 0,
   Prepare: 1
-}
+};
 
 function* onAccountsFetched(action) {
   let drizzle = yield select(state => state.drizzle.instance);
@@ -98,26 +89,34 @@ function* getSwap(action) {
 }
 
 function* prepareSwap(action) {
-  console.log('ethereum.prepareSwap', action);
   const swap = yield call(SwapsService.getSwap, action.payload.id);
   const drizzle = yield select(state => state.drizzle.instance);
   const accounts = yield select(state => state.accounts);
   const address = accounts[0];
   const AtomicSwap = drizzle.contracts.AtomicSwap;
 
-  const transaction = yield call(
-    AtomicSwap.methods.prepare(
+  const prepareTransaction = yield call(
+    AtomicSwap.methods.open(
       Operations.Prepare,
       swap.id,
       Number(new Big(swap.amount).times(DECIMALS).valueOf()),
       address,
-      swap.hashlock,
+      ethUtil.bufferToHex(ethUtil.setLengthLeft(swap.hashlock, 32)),
       swap.timelock,
       `${swap.sourceChain}:${swap.targetChain}`,
       address,
       swap.holdingAddress
     ).send
   );
+
+  const payload = {
+    id: swap.id,
+    transaction: {
+      prepareTransaction
+    }
+  };
+  console.log('calling put(updateSwapTransaction)')
+  yield put(updateSwapTransaction(payload));
 }
 
 function* openSwap(action) {

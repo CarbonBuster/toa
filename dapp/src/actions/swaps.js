@@ -4,6 +4,7 @@ export const ADD_SWAP = 'ADD_SWAP';
 export const GET_SWAP = 'GET_SWAP';
 export const SET_SELECTED_SWAP = 'SET_SELECTED_SWAP';
 export const UPDATE_SWAP = 'UPDATE_SWAP';
+export const UPDATE_SWAP_TRANSACTION = 'UPDATE_SWAP_TRANSACTION';
 export const SWAP_UPDATED = 'SWAP_UPDATED';
 
 export function getSwap(id) {
@@ -47,9 +48,16 @@ export function updateSwap(swap) {
   };
 }
 
-export function swapUpdated(id){
+export function updateSwapTransaction(swap) {
+  return {
+    type: UPDATE_SWAP_TRANSACTION,
+    payload: { swap }
+  };
+}
+
+export function swapUpdated(id) {
   return {
     type: SWAP_UPDATED,
-    payload: {id}
-  }
+    payload: { id }
+  };
 }

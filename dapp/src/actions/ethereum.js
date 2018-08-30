@@ -57,7 +57,6 @@ export function openSwap(payload) {
 }
 
 export function prepareSwap(id) {
-  console.log('ethereum.prepareSwap', id);
   return {
     type: PREPARE_SWAP,
     payload: { id }

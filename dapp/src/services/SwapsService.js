@@ -49,3 +49,14 @@ export async function updateSwap(swap) {
   });
   db.commit();
 }
+
+export async function updateSwapTransaction(swap) {
+  createTableIfNotExists();
+  db.update('swaps', { id: swap.id }, row => {
+    row.transaction = {
+      ...row.transaction,
+      ...swap.transaction
+    };
+  });
+  db.commit();
+}
