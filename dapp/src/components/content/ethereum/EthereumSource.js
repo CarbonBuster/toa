@@ -29,7 +29,7 @@ class EthereumSource extends Component {
     });
   }
 
-  openSwap(event) {
+  openSwap() {
     this.props.openSwap(this.state);
   }
 

@@ -115,7 +115,7 @@ export default class AtomicSwap {
       )
       .build();
 
-    return { refundTx, holdingTx };
+    return { refundTx, holdingTx, timelock: minTime };
   }
 
   async buildMoveAssetToHoldingAccountTransaction({ distributionAccount, holdingAccount, swapSize }) {

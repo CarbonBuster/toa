@@ -45,7 +45,6 @@ export async function updateSwap(swap) {
       ...row,
       ...swap
     };
-    console.log('updated values', updated);
     return updated;
   });
   db.commit();

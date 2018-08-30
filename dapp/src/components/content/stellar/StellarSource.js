@@ -10,18 +10,22 @@ class StellarSource extends Component {
     this.validateStellarAddress = this.validateStellarAddress.bind(this);
     this.onAmountCaptured = this.onAmountCaptured.bind(this);
     this.onStellarAddressCaptured = this.onStellarAddressCaptured.bind(this);
+    this.onStellarSecretChanged = this.onStellarSecretChanged.bind(this);
     this.loadAccount = this.loadAccount.bind(this);
     this.openSwap = this.openSwap.bind(this);
     this.onChainSelected = this.onChainSelected.bind(this);
     this.state = {
       amount: 0,
       stellarAddress: '',
+      stellarSecret: '',
+      targetAddress: '',
+      targetChain: '',
       isValidStellarAddress: false
     };
   }
 
-  openSwap(){
-    console.log('openSwap');
+  openSwap() {
+    this.props.openSwap(this.state);
   }
 
   onAmountCaptured(event) {
@@ -40,6 +44,12 @@ class StellarSource extends Component {
   onStellarAddressCaptured(event) {
     this.setState({
       stellarAddress: event.target.value
+    });
+  }
+
+  onStellarSecretChanged(event) {
+    this.setState({
+      stellarSecret: event.target.value
     });
   }
 
@@ -82,7 +92,16 @@ class StellarSource extends Component {
               </select>
             </div>
           )}
-          {this.state.targetChain === 'ethereum' && this.state.isValidStellarAddress && <EthereumTarget onTargetAddressCaptured={this.onTargetAddressCaptured} openSwap={this.openSwap} {...this.props} />}
+          {this.state.targetChain === 'ethereum' &&
+            this.state.isValidStellarAddress && (
+              <div>
+                <p>Stellar Secret</p>
+                <p>
+                  <input type="password" name="stellarSecret" onChange={this.onStellarSecretChanged} />
+                </p>
+                <EthereumTarget onTargetAddressCaptured={this.onTargetAddressCaptured} openSwap={this.openSwap} ethereum={this.props.ethereum}/>
+              </div>
+            )}
         </div>
       );
     return <div />;

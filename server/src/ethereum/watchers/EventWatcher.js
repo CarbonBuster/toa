@@ -20,11 +20,11 @@ class EventWatcher {
         console.log(error); //need to alert 
         return;
       }
-      let {
+      const {
         args: { _swapID }
       } = event;
-      let { timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress } = await this.swap.getSwap(_swapID);
-      let swapEvent = new ToaEvent()
+      const { timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress } = await this.swap.getSwap(_swapID);
+      const swapEvent = new ToaEvent()
         .withId(_swapID)
         .withTimelock(timelock.toString())
         .withValue(value.toString())

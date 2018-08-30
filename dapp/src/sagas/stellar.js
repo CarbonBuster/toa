@@ -1,10 +1,15 @@
-import { CLAIM, LOAD_ACCOUNT, setDalaBalance, setLumenBalance, setLoaded } from '../actions/stellar';
-import { call, takeEvery, put } from 'redux-saga/effects';
+import { CLAIM, LOAD_ACCOUNT, OPEN_SWAP, setDalaBalance, setLumenBalance, setLoaded } from '../actions/stellar';
+import { prepareSwap as prepareEthereumSwap } from '../actions/ethereum';
+import { addSwap } from '../actions/swaps';
+import { call, takeEvery, put, select } from 'redux-saga/effects';
 import { push } from 'react-router-redux';
 import AtomicSwap from '../lib/stellar/AtomicSwap';
 import * as SwapsService from '../services/SwapsService';
 import Stellar from 'stellar-sdk';
 import server from '../lib/stellar/Server';
+import Big from 'big.js';
+import ethUtil from 'ethereumjs-util';
+import Crypto from 'crypto';
 
 const swap = new AtomicSwap({
   server,
@@ -71,7 +76,6 @@ function getLumenBalance(account) {
 }
 
 function* loadAccount(action) {
-  console.log(action);
   try {
     const account = yield call(server.loadAccount.bind(server), action.payload.publicKey);
     yield put(setDalaBalance(getDalaBalance(account)));
@@ -87,4 +91,66 @@ function* loadAccount(action) {
 
 export function* watchLoadAccount() {
   yield takeEvery(LOAD_ACCOUNT, loadAccount);
+}
+
+function* openSwap(action) {
+  try {
+    let targetAddress;
+    const { amount, stellarAddress, stellarSecret, targetChain } = action.payload;
+    const swapId = ethUtil.bufferToHex(ethUtil.setLengthLeft(Crypto.randomBytes(32), 32));
+    const depositor = process.env.REACT_APP_STELLAR_DALA_DEPOSITOR;
+    const { preimage, hashlock } = swap.makeHashlock();
+    const { holdingKeys } = swap.makeHoldingKeys();
+    const { refundTx, holdingTx, timelock } = yield call(swap.buildHoldingAccountTransaction.bind(swap), {
+      hashlock,
+      swapSize: new Big(amount).toFixed(7),
+      holdingAccount: holdingKeys.publicKey(),
+      depositorAccount: depositor,
+      distributionAccount: stellarAddress
+    });
+    const { moveTx } = yield call(swap.buildMoveAssetToHoldingAccountTransaction, {
+      distributionAccount: stellarAddress,
+      holdingAccount: holdingKeys.publicKey(),
+      swapSize: new Big(amount).toFixed(7)
+    });
+    holdingTx.sign(Stellar.Keypair.fromSecret(stellarSecret));
+    holdingTx.sign(holdingKeys);
+    const holdingTxResult = yield call(server.submitTransaction.bind(server), holdingTx);
+    moveTx.sign(Stellar.Keypair.fromSecret(stellarSecret));
+    const moveTxResult = yield call(server.submitTransaction.bind(server), moveTx);
+    const payload = {
+      id: swapId,
+      sourceChain: 'stellar',
+      sourceAddress: stellarAddress,
+      targetChain,
+      preimage,
+      hashlock,
+      amount,
+      targetAddress,
+      holdingAddress: holdingKeys.publicKey(),
+      status: 'Open',
+      timelock,
+      transaction: {
+        refundTx: refundTx.toEnvelope().toXDR('base64'),
+        holdingTxResult,
+        moveTxResult
+      }
+    };
+    yield put(addSwap(payload));
+    if (targetChain === 'ethereum') {
+      // targetAddress = yield select(state => state.accounts[0]);
+      console.log('putting prepareEthereumSwap action');
+      yield put(prepareEthereumSwap(swapId));
+    }
+    yield put(push('/'));
+  } catch (error) {
+    if (error.response && error.response.data) {
+      console.log(JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+}
+
+export function* watchOpenSwap() {
+  yield takeEvery(OPEN_SWAP, openSwap);
 }

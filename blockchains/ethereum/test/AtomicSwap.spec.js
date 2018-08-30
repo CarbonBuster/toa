@@ -6,24 +6,24 @@ const StellarSdk = require('stellar-sdk');
 
 contract('AtomicSwap', async accounts => {
   it('should open a new atomic swap', async () => {
-    let swapId = ethUtil.bufferToHex(ethUtil.setLengthLeft(1, 32));
-    let tokenValue = 1;
-    let tokenAddress = TestToken.address;
-    let swappee = '0x5aeda56215b167893e80b4fe645ba6d5bab767de';
-    let hash = ethUtil.bufferToHex(ethUtil.setLengthLeft(1, 32));
-    let timelock = moment
+    const swapId = ethUtil.bufferToHex(ethUtil.setLengthLeft(1, 32));
+    const tokenValue = 1;
+    const swappee = '0x5aeda56215b167893e80b4fe645ba6d5bab767de';
+    const hash = ethUtil.bufferToHex(ethUtil.setLengthLeft(1, 32));
+    const timelock = moment
       .utc()
       .add(1, 'days')
       .valueOf();
-    let keypair = StellarSdk.Keypair.random();
-    let targetAddress = keypair.publicKey();
+    const keypair = StellarSdk.Keypair.random();
+    const targetAddress = keypair.publicKey();
 
-    let token = await TestToken.deployed();
+    const token = await TestToken.deployed();
     await token.approve(AtomicSwap.address, 1)
-    let swap = await AtomicSwap.deployed();
-    await swap.open(swapId, 1, tokenAddress, swappee, hash, timelock, targetAddress);
+    const swap = await AtomicSwap.deployed();
 
-    let balance = await token.balanceOf(AtomicSwap.address);
+    await swap.open(0, swapId, 1, swappee, hash, timelock, 'ethereum:stellar', targetAddress, '');
+
+    const balance = await token.balanceOf(AtomicSwap.address);
     assert.equal(balance, tokenValue);
   });
   it('should not open an existing swap', async () => {

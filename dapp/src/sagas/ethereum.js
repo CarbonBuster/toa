@@ -1,5 +1,13 @@
-import { SET_SELECTED_CHAIN } from '../actions/chains';
-import { setDalaBalance, setEtherBalance, setLoaded, setAddress, setNetwork, OPEN_SWAP, GET_SWAP } from '../actions/ethereum';
+import {
+  setDalaBalance,
+  setEtherBalance,
+  setLoaded,
+  setAddress,
+  setNetwork,
+  OPEN_SWAP,
+  GET_SWAP,
+  PREPARE_SWAP,
+} from '../actions/ethereum';
 import { addSwap, updateSwap } from '../actions/swaps';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import { push } from 'react-router-redux';
@@ -7,6 +15,7 @@ import ethUtil from 'ethereumjs-util';
 import Crypto from 'crypto';
 import moment from 'moment';
 import Big from 'big.js';
+import * as SwapsService from '../services/SwapsService';
 
 const DECIMALS = 10 ** 18;
 
@@ -23,7 +32,7 @@ const Networks = {
   '3': 'Ropsten',
   '4': 'Rinkeby',
   '42': 'Kovan'
-}
+};
 
 function* onAccountsFetched(action) {
   let drizzle = yield select(state => state.drizzle.instance);
@@ -55,50 +64,21 @@ function* onAccountsFetched(action) {
   );
 
   const web3 = yield select(state => state.web3);
-  yield put(setNetwork({
-    id: web3.networkId,
-    name: Networks[web3.networkId]
-  }));
+  yield put(
+    setNetwork({
+      id: web3.networkId,
+      name: Networks[web3.networkId]
+    })
+  );
 
   yield put(setLoaded(true));
 }
-
-// function* onChainSelected(action) {
-//   if (action.payload.chain === 'ethereum') {
-//     let drizzle = yield select(state => state.drizzle.instance);
-//     let accounts = yield select(state => state.accounts);
-//     let accountBalance = yield select(state => state.accountBalances[accounts[0]]);
-
-//     yield put(setAddress(accounts[0]));
-
-//     yield put(
-//       setEtherBalance({
-//         wei: accountBalance,
-//         eth: new Big(accountBalance).div(DECIMALS).valueOf(),
-//         formatted: 'Ξ ' + new Big(accountBalance).div(DECIMALS).toFixed(5)
-//       })
-//     );
-
-//     const address = accounts[0];
-//     const DalaToken = drizzle.contracts.DalaToken;
-//     const tokenBalance = yield call(DalaToken.methods.balanceOf(address).call);
-//     yield put(
-//       setDalaBalance({
-//         wei: tokenBalance,
-//         eth: new Big(tokenBalance).div(DECIMALS).valueOf(),
-//         formatted: 'đ ' + new Big(tokenBalance).div(DECIMALS).toFixed(5)
-//       })
-//     );
-//     yield put(setLoaded(true));
-//   }
-// }
 
 function* getSwap(action) {
   const { id } = action.payload;
   let drizzle = yield select(state => state.drizzle.instance);
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const swapFields = yield call(AtomicSwap.methods.getSwap(id).call);
-  console.log('swapFields', swapFields);
   const swap = {
     id,
     hashlock: swapFields.hash,
@@ -108,12 +88,30 @@ function* getSwap(action) {
     targetAddress: swapFields.targetAddress,
     holdingAddress: swapFields.holdingAddress
   };
-  console.log('swap', swap);
   yield put(updateSwap(swap));
 }
 
+function* prepareSwap(action) {
+  console.log('ethereum.prepareSwap', action);
+  const swap = yield call(SwapsService.getSwap, action.payload.id);
+  const drizzle = yield select(state => state.drizzle.instance);
+  const DalaToken = drizzle.contracts.DalaToken;
+  const AtomicSwap = drizzle.contracts.AtomicSwap;
+  const transaction = yield call(
+    AtomicSwap.methods.prepare(
+      swap.id,
+      Number(new Big(swap.amount).times(DECIMALS).valueOf()),
+      DalaToken.address,
+      swap.sourceChain,
+      swap.sourceAddress,
+      swap.hashlock,
+      swap.timelock,
+      swap.holdingAddress
+    ).send
+  );
+}
+
 function* openSwap(action) {
-  console.log(action);
   const { amount, targetAddress, targetChain } = action.payload;
 
   //generate swap ID
@@ -132,17 +130,15 @@ function* openSwap(action) {
       .valueOf() / 1000;
 
   //call contract
-  let drizzle = yield select(state => state.drizzle.instance);
+  const drizzle = yield select(state => state.drizzle.instance);
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const DalaToken = drizzle.contracts.DalaToken;
 
   //check if there is an allowance for AtomicSwap to transfer tokens on behalf of the user
-  let accounts = yield select(state => state.accounts);
+  const accounts = yield select(state => state.accounts);
   const address = accounts[0];
-  let allowance = yield call(DalaToken.methods.allowance(address, AtomicSwap.address).call);
-  console.log(allowance);
-  let ballowance = new Big(allowance).div(DECIMALS);
-  console.log('ballowance', ballowance.valueOf());
+  const allowance = yield call(DalaToken.methods.allowance(address, AtomicSwap.address).call);
+  const ballowance = new Big(allowance).div(DECIMALS);
   if (ballowance.lt(amount)) {
     alert('Need to give AtomicSwap allowance to transfer tokens on your behalf');
     yield call(DalaToken.methods.approve(AtomicSwap.address, new Big(amount).times(DECIMALS).valueOf()).send);
@@ -153,7 +149,7 @@ function* openSwap(action) {
       swapId,
       amount * DECIMALS,
       DalaToken.address,
-      '0x5aeda56215b167893e80b4fe645ba6d5bab767de',
+      process.env.REACT_APP_ETHEREUM_SWAP_TARGET,
       hashlock,
       timelock,
       targetChain,
@@ -177,9 +173,18 @@ function* openSwap(action) {
   yield put(push('/'));
 }
 
-export function* watchSelectedChain() {
-  // yield takeEvery(SET_SELECTED_CHAIN, onChainSelected);
+export function* watchOpenSwap() {
   yield takeLatest(OPEN_SWAP, openSwap);
+}
+
+export function* watchGetSwap() {
   yield takeLatest(GET_SWAP, getSwap);
+}
+
+export function* watchPrepareSwap() {
+  yield takeLatest(PREPARE_SWAP, prepareSwap);
+}
+
+export function* watchAccountsFetched() {
   yield takeLatest('ACCOUNTS_FETCHED', onAccountsFetched);
 }

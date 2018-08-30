@@ -6,16 +6,14 @@ contract AtomicSwap {
     struct Swap {
         uint256 timelock;
         uint256 tokenValue;
-        string sourceChain;
         string sourceAddress;
         address swapper;
         address tokenAddress;
         address swappee;
         bytes32 hash;
         bytes preimage;
-        string targetChain;
         string targetAddress;
-        string holdingAddress;
+        string swapType;
     }
 
     enum States {
@@ -27,6 +25,14 @@ contract AtomicSwap {
         PREPARED
     }
 
+    enum Operations {
+        Open,
+        Prepare
+    }
+
+    address private erc20Address;
+    ERC20 private erc20Contract;
+
     mapping (bytes32 => Swap) private swaps;
     mapping (bytes32 => States) private swapStates;
     mapping (address => bytes32[]) public swapsByAddress;
@@ -37,8 +43,9 @@ contract AtomicSwap {
     event Accept(bytes32 indexed _swapID, string _holdingAddress);
     event Prepare(bytes32 indexed _swapID);
 
-    modifier onlyInvalidSwaps(bytes32 _swapID) {
-        require (swapStates[_swapID] == States.INVALID, "Swap state must be INVALID");
+    modifier onlyInvalidSwaps(bytes32 _swapID, uint _operation) {
+        if(Operations(_operation) == Operations.Open)
+            require (swapStates[_swapID] == States.INVALID || swapStates[_swapID] == States.PREPARED, "Swap state must be INVALID or PREPARED");
         _;
     }
 
@@ -84,87 +91,91 @@ contract AtomicSwap {
         _;
     }
 
-    function prepare(
-        bytes32 _swapID, 
-        uint256 _tokenValue, 
-        address _tokenAddress, 
-        string _sourceChain, 
-        address _sourceAddress, 
-        bytes32 _hash, 
-        uint256 _timelock, 
-        string _holdingAddress) public onlyInvalidSwaps(_swapID) {
-        ERC20 erc20Contract = ERC20(_tokenAddress);
-        Swap memory swap = Swap({
-            timelock: _timelock,
-            tokenValue: _tokenValue,
-            tokenAddress: _tokenAddress,
-            sourceChain: _sourceChain,
-            sourceAddress: _sourceAddress,
-            swappee: msg.sender,
-            hash: _hash,
-            preimage: new bytes(0),
-            targetChain: "ethereum",
-            targetAddress: msg.sender,
-            holdingAddress: _holdingAddress
-        });
-        swaps[_swapID] = swap;
-        swapStates[_swapID] = States.PREPARED;
-        swapsByAddress[msg.sender].push(_swapID);
-        emit Prepare(_swapID, _swappee, _hash);
+    modifier validOperation(uint _operation){
+        require(uint(Operations.Prepare) >= _operation, "_operation must be 0 or 1");
+        _;
     }
 
-    function openPrepared(bytes32 _swapID) public onlyPreparedSwaps(_swapID){
-        Swap memory swap = swaps[_swapID];
-        swaps[_swapID].swapper = msg.sender;
-        swapStates[_swapID] = States.OPEN;
-        swapsByAddress[msg.sender].push(_swapID);
-
-        ERC20 erc20Contract = ERC20(swap.tokenAddress);
-        require(_tokenValue <= erc20Contract.allowance(msg.sender, address(this)), "Value must be less than or equal to allowance");
-        require(erc20Contract.transferFrom(msg.sender, address(this), swap.tokenValue), "Transfer failed");
-
-        emit Open(_swapID, swap.swappee, swap.hash);
+    constructor(address _erc20Address){
+        erc20Address = _erc20Address;
+        erc20Contract = ERC20(_erc20Address);
     }
 
     function open(
+        uint _operation,
         bytes32 _swapID, 
         uint256 _tokenValue, 
-        address _tokenAddress, 
         address _swappee, 
         bytes32 _hash, 
         uint256 _timelock, 
-        string _targetChain, 
-        string _targetAddress) public onlyInvalidSwaps(_swapID) {
-        // Transfer value from the swapper to this contract.
-        ERC20 erc20Contract = ERC20(_tokenAddress);
-        require(_tokenValue <= erc20Contract.allowance(msg.sender, address(this)), "Value must be less than or equal to allowance");
-        require(erc20Contract.transferFrom(msg.sender, address(this), _tokenValue), "Transfer failed");
+        string _swapType, 
+        string _targetAddress,
+        string _sourceAddress) public onlyInvalidSwaps(_swapID, _operation) validOperation(_operation){
 
-        // Store the details of the swap.
-        Swap memory swap = Swap({
-            timelock: _timelock,
-            tokenValue: _tokenValue,
-            sourceChain: "ethereum",
-            sourceAddress: msg.sender,
-            swapper: msg.sender,
-            tokenAddress: _tokenAddress,
-            swappee: _swappee,
-            hash: _hash,
-            preimage: new bytes(0),
-            targetChain: _targetChain,
-            targetAddress: _targetAddress,
-            holdingAddress: ""
-        });
-        swaps[_swapID] = swap;
-        swapStates[_swapID] = States.OPEN;
-        swapsByAddress[msg.sender].push(_swapID);
-        emit Open(_swapID, _swappee, _hash);
+        Swap memory swap;
+        Operations op = Operations(_operation);
+        
+        if(op == Operations.Open){
+            if(swapStates[_swapID] == States.INVALID){
+                // Transfer value from the swapper to this contract.
+                require(_tokenValue <= erc20Contract.allowance(msg.sender, address(this)), "Value must be less than or equal to allowance");
+                require(erc20Contract.transferFrom(msg.sender, address(this), _tokenValue), "Transfer failed");
+
+                // Store the details of the swap.
+                swap = Swap({
+                    timelock: _timelock,
+                    tokenValue: _tokenValue,
+                    sourceAddress: "",
+                    swapper: msg.sender,
+                    tokenAddress: erc20Address,
+                    swappee: _swappee,
+                    hash: _hash,
+                    preimage: new bytes(0),
+                    targetAddress: _targetAddress,
+                    swapType: _swapType
+                });
+                swaps[_swapID] = swap;
+                swapStates[_swapID] = States.OPEN;
+                swapsByAddress[msg.sender].push(_swapID);
+                emit Open(_swapID, _swappee, _hash);
+                return;
+            }
+            if(swapStates[_swapID] == States.PREPARED){
+                swap = swaps[_swapID];
+                swaps[_swapID].swapper = msg.sender;
+                swapStates[_swapID] = States.OPEN;
+                swapsByAddress[msg.sender].push(_swapID);
+
+                require(swap.tokenValue <= erc20Contract.allowance(msg.sender, address(this)), "Value must be less than or equal to allowance");
+                require(erc20Contract.transferFrom(msg.sender, address(this), swap.tokenValue), "Transfer failed");
+
+                emit Open(_swapID, swap.swappee, swap.hash);
+            }
+        }
+        if(op == Operations.Prepare){
+            swap = Swap({
+                timelock: _timelock,
+                tokenValue: _tokenValue,
+                tokenAddress: erc20Address,
+                sourceAddress: _sourceAddress,
+                swapper: address(0x0),
+                swappee: msg.sender,
+                hash: _hash,
+                preimage: new bytes(0),
+                targetAddress: _targetAddress,
+                swapType: _swapType
+            });
+            swaps[_swapID] = swap;
+            swapStates[_swapID] = States.PREPARED;
+            swapsByAddress[msg.sender].push(_swapID);
+            emit Prepare(_swapID);
+        }
     }
 
-    function accept(bytes32 _swapID, string _holdingAddress) public onlyOpenSwaps(_swapID) {
-        swaps[_swapID].holdingAddress = _holdingAddress;
+    function accept(bytes32 _swapID, string _targetAddress) public onlyOpenSwaps(_swapID) {
+        swaps[_swapID].targetAddress = _targetAddress;
         swapStates[_swapID] = States.ACCEPTED;
-        emit Accept(_swapID, _holdingAddress);
+        emit Accept(_swapID, _targetAddress);
     }
 
     function close(bytes32 _swapID, bytes _preimage) public onlyAcceptedSwaps(_swapID) onlyWithPreimage(_swapID, _preimage) {
@@ -174,7 +185,6 @@ contract AtomicSwap {
         swapStates[_swapID] = States.CLOSED;
 
         // Transfer the token value from this contract to the swappee.
-        ERC20 erc20Contract = ERC20(swap.tokenAddress);
         require(erc20Contract.transfer(swap.swappee, swap.tokenValue), "Transfer failed");
 
         emit Close(_swapID, _preimage);
@@ -186,7 +196,6 @@ contract AtomicSwap {
         swapStates[_swapID] = States.EXPIRED;
 
         // Transfer the token value from this contract back to the swapper.
-        ERC20 erc20Contract = ERC20(swap.tokenAddress);
         require(erc20Contract.transfer(swap.swapper, swap.tokenValue), "Transfer failed");
 
         emit Expire(_swapID);
@@ -198,10 +207,9 @@ contract AtomicSwap {
         address tokenAddress, 
         address swappee, 
         bytes32 hash, 
-        string targetChain, 
         string targetAddress, 
-        AtomicSwap.States states, 
-        string holdingAddress) {
+        string swapType,
+        AtomicSwap.States states) {
         AtomicSwap.States _state = swapStates[_swapID];
         Swap memory swap = swaps[_swapID];
         return (
@@ -210,13 +218,21 @@ contract AtomicSwap {
             swap.tokenAddress, 
             swap.swappee, 
             swap.hash, 
-            swap.targetChain, 
             swap.targetAddress, 
-            _state, 
-            swap.holdingAddress,
-            swap.sourceChain,
-            swap.sourceAddress);
+            swap.swapType,
+            _state);
     }
+
+    // function getSwapSource(bytes32 _swapID) public view returns (
+    //     string sourceChain,
+    //     string sourceAddress
+    // ){
+    //     Swap memory swap = swaps[_swapID];
+    //     return (
+    //         swap.sourceChain,
+    //         swap.sourceAddress
+    //     );
+    // }
 
     function getPreimage(bytes32 _swapID) public view onlyClosedSwaps(_swapID) returns (bytes preimage) {
         Swap memory swap = swaps[_swapID];

@@ -34,6 +34,7 @@ export function setLoaded(isLoaded) {
 }
 
 export function openSwap(payload) {
+  console.log('openSwap', payload);
   return {
     type: OPEN_SWAP,
     payload
