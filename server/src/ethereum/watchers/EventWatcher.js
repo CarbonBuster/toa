@@ -3,7 +3,7 @@ const AtomicSwap = require('../contracts/AtomicSwap');
 
 class EventWatcher {
   constructor(params) {
-    let { rpcUrl, contractAddress } = params;
+    const { rpcUrl, contractAddress } = params;
     this.swap = new AtomicSwap({
       rpcUrl,
       contractAddress
@@ -12,32 +12,39 @@ class EventWatcher {
   }
 
   async watch(eventName) {
-    await this.swap.load();
-    this.swap.on(eventName, createEvent.bind(this));
-  
     async function createEvent(error, event) {
       if (error) {
-        console.log(error); //need to alert 
+        console.log(error); // need to alert
         return;
       }
       const {
         args: { _swapID }
       } = event;
-      const { timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress } = await this.swap.getSwap(_swapID);
+
+      const { swapType, timelock, tokenAddress, tokenValue, swapper, swappee, hash, targetAddress, holdingAddress, status } = await this.swap.getSwap(
+        _swapID
+      );
+      console.log('fields', { swapType, timelock, tokenAddress, tokenValue, swapper, swappee, hash, targetAddress, holdingAddress, status });
+      const [sourceChain, targetChain] = swapType.split(':');
       const swapEvent = new ToaEvent()
         .withId(_swapID)
+        .withSourceChain(sourceChain)
+        .withTargetChain(targetChain)
         .withTimelock(timelock.toString())
-        .withValue(value.toString())
         .withTokenAddress(tokenAddress)
+        .withValue(tokenValue.toString())
+        .withSwapper(swapper)
         .withSwappee(swappee)
         .withHash(hash)
-        .withTargetChain(targetChain)
         .withTargetAddress(targetAddress)
-        .withStatus(status.toString())
         .withHoldingAddress(holdingAddress)
+        .withStatus(status.toString())
         .withEvent(event);
       await swapEvent.save();
     }
+
+    await this.swap.load();
+    this.swap.on(eventName, createEvent.bind(this));
   }
 }
 

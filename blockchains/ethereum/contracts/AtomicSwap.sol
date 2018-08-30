@@ -4,16 +4,16 @@ import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract AtomicSwap {
     struct Swap {
+        string swapType;
         uint256 timelock;
         uint256 tokenValue;
-        string sourceAddress;
         address swapper;
         address tokenAddress;
         address swappee;
         bytes32 hash;
         bytes preimage;
         string targetAddress;
-        string swapType;
+        string holdingAddress;
     }
 
     enum States {
@@ -110,7 +110,7 @@ contract AtomicSwap {
         uint256 _timelock, 
         string _swapType, 
         string _targetAddress,
-        string _sourceAddress) public onlyInvalidSwaps(_swapID, _operation) validOperation(_operation){
+        string _holdingAddress) public onlyInvalidSwaps(_swapID, _operation) validOperation(_operation){
 
         Swap memory swap;
         Operations op = Operations(_operation);
@@ -125,7 +125,7 @@ contract AtomicSwap {
                 swap = Swap({
                     timelock: _timelock,
                     tokenValue: _tokenValue,
-                    sourceAddress: "",
+                    holdingAddress: "",
                     swapper: msg.sender,
                     tokenAddress: erc20Address,
                     swappee: _swappee,
@@ -157,7 +157,7 @@ contract AtomicSwap {
                 timelock: _timelock,
                 tokenValue: _tokenValue,
                 tokenAddress: erc20Address,
-                sourceAddress: _sourceAddress,
+                holdingAddress: _holdingAddress,
                 swapper: address(0x0),
                 swappee: msg.sender,
                 hash: _hash,
@@ -172,10 +172,10 @@ contract AtomicSwap {
         }
     }
 
-    function accept(bytes32 _swapID, string _targetAddress) public onlyOpenSwaps(_swapID) {
-        swaps[_swapID].targetAddress = _targetAddress;
+    function accept(bytes32 _swapID, string _holdingAddress) public onlyOpenSwaps(_swapID) {
+        swaps[_swapID].holdingAddress = _holdingAddress;
         swapStates[_swapID] = States.ACCEPTED;
-        emit Accept(_swapID, _targetAddress);
+        emit Accept(_swapID, _holdingAddress);
     }
 
     function close(bytes32 _swapID, bytes _preimage) public onlyAcceptedSwaps(_swapID) onlyWithPreimage(_swapID, _preimage) {
@@ -202,37 +202,31 @@ contract AtomicSwap {
     }
 
     function getSwap(bytes32 _swapID) public view returns (
-        uint256 timelock, 
-        uint256 tokenValue, 
-        address tokenAddress, 
-        address swappee, 
-        bytes32 hash, 
-        string targetAddress, 
         string swapType,
+        uint256 timelock,
+        address tokenAddress,
+        uint256 tokenValue,
+        address swapper,
+        address swappee,
+        bytes32 hash,
+        string targetAddress,
+        string holdingAddress,
         AtomicSwap.States states) {
         AtomicSwap.States _state = swapStates[_swapID];
         Swap memory swap = swaps[_swapID];
         return (
+            swap.swapType,
             swap.timelock, 
-            swap.tokenValue, 
             swap.tokenAddress, 
+            swap.tokenValue, 
+            swap.swapper,
             swap.swappee, 
             swap.hash, 
             swap.targetAddress, 
-            swap.swapType,
-            _state);
+            swap.holdingAddress,
+            _state
+        );
     }
-
-    // function getSwapSource(bytes32 _swapID) public view returns (
-    //     string sourceChain,
-    //     string sourceAddress
-    // ){
-    //     Swap memory swap = swaps[_swapID];
-    //     return (
-    //         swap.sourceChain,
-    //         swap.sourceAddress
-    //     );
-    // }
 
     function getPreimage(bytes32 _swapID) public view onlyClosedSwaps(_swapID) returns (bytes preimage) {
         Swap memory swap = swaps[_swapID];

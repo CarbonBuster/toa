@@ -73,14 +73,15 @@ class AtomicSwap {
   }
 
   async getSwap(id) {
-    const [timelock, value, tokenAddress, swappee, hash, targetChain, targetAddress, status, holdingAddress] = await this.swap.getSwap(id);
+    const [swapType, timelock, tokenAddress, tokenValue, swapper, swappee, hash, targetAddress, holdingAddress, status] = await this.swap.getSwap(id);
     return {
+      swapType,
       timelock,
-      value,
+      tokenValue,
       tokenAddress,
       swappee,
+      swapper,
       hash,
-      targetChain,
       targetAddress,
       status,
       holdingAddress

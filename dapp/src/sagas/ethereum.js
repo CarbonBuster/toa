@@ -34,6 +34,11 @@ const Networks = {
   '42': 'Kovan'
 };
 
+const Operations = {
+  Open: 0,
+  Prepare: 1
+}
+
 function* onAccountsFetched(action) {
   let drizzle = yield select(state => state.drizzle.instance);
 
@@ -79,6 +84,7 @@ function* getSwap(action) {
   let drizzle = yield select(state => state.drizzle.instance);
   const AtomicSwap = drizzle.contracts.AtomicSwap;
   const swapFields = yield call(AtomicSwap.methods.getSwap(id).call);
+  console.log('swapFields', swapFields);
   const swap = {
     id,
     hashlock: swapFields.hash,
@@ -95,17 +101,20 @@ function* prepareSwap(action) {
   console.log('ethereum.prepareSwap', action);
   const swap = yield call(SwapsService.getSwap, action.payload.id);
   const drizzle = yield select(state => state.drizzle.instance);
-  const DalaToken = drizzle.contracts.DalaToken;
+  const accounts = yield select(state => state.accounts);
+  const address = accounts[0];
   const AtomicSwap = drizzle.contracts.AtomicSwap;
+
   const transaction = yield call(
     AtomicSwap.methods.prepare(
+      Operations.Prepare,
       swap.id,
       Number(new Big(swap.amount).times(DECIMALS).valueOf()),
-      DalaToken.address,
-      swap.sourceChain,
-      swap.sourceAddress,
+      address,
       swap.hashlock,
       swap.timelock,
+      `${swap.sourceChain}:${swap.targetChain}`,
+      address,
       swap.holdingAddress
     ).send
   );
@@ -146,14 +155,15 @@ function* openSwap(action) {
 
   const transaction = yield call(
     AtomicSwap.methods.open(
+      Operations.Open,
       swapId,
-      amount * DECIMALS,
-      DalaToken.address,
+      Number(new Big(amount).times(DECIMALS).valueOf()),
       process.env.REACT_APP_ETHEREUM_SWAP_TARGET,
       hashlock,
       timelock,
-      targetChain,
-      targetAddress
+      `ethereum:${targetChain}`,
+      targetAddress,
+      ''
     ).send
   );
 

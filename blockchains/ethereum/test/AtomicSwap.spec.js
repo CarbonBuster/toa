@@ -18,7 +18,7 @@ contract('AtomicSwap', async accounts => {
     const targetAddress = keypair.publicKey();
 
     const token = await TestToken.deployed();
-    await token.approve(AtomicSwap.address, 1)
+    await token.approve(AtomicSwap.address, 1);
     const swap = await AtomicSwap.deployed();
 
     await swap.open(0, swapId, 1, swappee, hash, timelock, 'ethereum:stellar', targetAddress, '');
@@ -26,9 +26,7 @@ contract('AtomicSwap', async accounts => {
     const balance = await token.balanceOf(AtomicSwap.address);
     assert.equal(balance, tokenValue);
   });
-  it('should not open an existing swap', async () => {
-
-  });
+  it('should not open an existing swap', async () => {});
   it('should not close if swap is not open', async () => {});
   it('should close if swap is open and pre-image is correct', async () => {});
   it('should not close if swap is open and pre-image is not correct', async () => {});

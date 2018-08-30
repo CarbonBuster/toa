@@ -28,6 +28,11 @@ class ToaEvent {
     return this;
   }
 
+  withSwapper(swapper){
+    this.swapper = swapper;
+    return this;
+  }
+
   withHash(hash) {
     this.hash = hash;
     return this;
@@ -60,6 +65,11 @@ class ToaEvent {
 
   withPreimage(preimage) {
     this.preimage = preimage;
+    return this;
+  }
+
+  withSourceChain(sourceChain){
+    this.sourceChain = sourceChain;
     return this;
   }
 
@@ -104,16 +114,17 @@ class ToaEvent {
   save() {
     const Item = {
       id: this.id,
+      sourceChain: this.sourceChain,
+      targetChain: this.targetChain,
       timelock: this.timelock,
-      value: this.value,
       tokenAddress: this.tokenAddress,
+      value: this.value,
+      swapper: this.swapper,
       swappee: this.swappee,
       hash: this.hash,
       targetAddress: this.targetAddress,
-      status: this.status,
-      event: this.event,
-      targetChain: this.targetChain,
       holdingAddress: this.holdingAddress,
+      status: this.status,
       preimage: this.preimage
     };
     return documentClient

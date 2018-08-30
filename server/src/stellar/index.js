@@ -13,6 +13,7 @@ const swap = new AtomicSwap({
 });
 
 exports.performSwap = async swapData => {
+  console.log('performSwap');
   try {
     const distribution = process.env.STELLAR_DALA_DISTRIBUTION;
     const distributionSecret = process.env.STELLAR_DALA_DISTRIBUTION_SECRET;
