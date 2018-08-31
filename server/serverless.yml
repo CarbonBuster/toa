@@ -13,6 +13,7 @@ provider:
   environment:
     ETHEREUM_RPC_URL: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_RPC_URL}
     ETHEREUM_ATOMIC_SWAP_ADDRESS: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_ATOMIC_SWAP_ADDRESS}
+    ETHEREUM_DALA_TOKEN_ADDRESS: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_DALA_TOKEN_ADDRESS}
     ETHEREUM_DEFAULT_GAS: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_DEFAULT_GAS}
     ETHEREUM_SWAPPEE: ${self:custom.profiles.${self:provider.profile}.ETHEREUM_SWAPPEE}
     STELLAR_DALA_DISTRIBUTION: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_DISTRIBUTION}
@@ -20,6 +21,7 @@ provider:
     STELLAR_IS_TEST: ${self:custom.profiles.${self:provider.profile}.STELLAR_IS_TEST}
     STELLAR_DALA_ASSET_CODE: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_ASSET_CODE}
     STELLAR_DALA_ASSET_ISSUER: ${self:custom.profiles.${self:provider.profile}.STELLAR_DALA_ASSET_ISSUER}
+    STELLAR_SWAPPEE: ${self:custom.profiles.${self:provider.profile}.STELLAR_SWAPPEE} 
   environmentSecrets:
     STELLAR_DALA_DISTRIBUTION_SECRET: '/${self:service}/${self:provider.profile}/STELLAR_DALA_DISTRIBUTION_SECRET'
     ETHEREUM_SIGNER_ADDRESS: '/${self:service}/${self:provider.profile}/ETHEREUM_SIGNER_ADDRESS'
@@ -67,6 +69,7 @@ custom:
     sandbox:
       ETHEREUM_RPC_URL: ${file(./secrets.yml):${self:provider.profile}.ethereum.rpcUrl}
       ETHEREUM_ATOMIC_SWAP_ADDRESS: ${file(./secrets.yml):${self:provider.profile}.ethereum.atomicSwap.address}
+      ETHEREUM_DALA_TOKEN_ADDRESS: ${file(./secrets.yml):${self:provider.profile}.ethereum.dalaToken.address}
       ETHEREUM_DEFAULT_GAS: 4500000
       ETHEREUM_SWAPPEE: ${file(./secrets.yml):${self:provider.profile}.ethereum.swappee.address}
       STELLAR_DALA_DISTRIBUTION: ${file(./secrets.yml):${self:provider.profile}.stellar.distribution.publicKey}
@@ -74,6 +77,7 @@ custom:
       STELLAR_IS_TEST: ${file(./secrets.yml):${self:provider.profile}.stellar.isTest}
       STELLAR_DALA_ASSET_CODE: ${file(./secrets.yml):${self:provider.profile}.stellar.dala.code}
       STELLAR_DALA_ASSET_ISSUER: ${file(./secrets.yml):${self:provider.profile}.stellar.dala.issuer}
+      STELLAR_SWAPPEE: ${file(./secrets.yml):${self:provider.profile}.stellar.swappee.publicKey}
 resources:
   Outputs:
   Resources:

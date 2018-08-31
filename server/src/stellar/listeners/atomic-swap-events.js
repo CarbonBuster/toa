@@ -7,7 +7,7 @@ const { wait } = require('../../lib/utils');
 const ToaEvent = require('../../model/ToaEvent');
 const { Statuses, Chains } = require('../../lib/constants');
 
-async function checkTransactions(_swap) {
+async function checkTransactionsForCorrectHashlock(_swap) {
   const transactions = await server
     .transactions()
     .forAccount(_swap.holdingAddress)
@@ -19,7 +19,6 @@ async function checkTransactions(_swap) {
       trx =>
         trx.signatures.length === 2 &&
         trx.operations.length === 1 &&
-        trx.operations.length &&
         trx.operations[0].type === 'payment' &&
         trx.operations[0].source === _swap.holdingAddress &&
         trx.operations[0].destination === _swap.targetAddress
@@ -43,14 +42,40 @@ async function checkTransactions(_swap) {
   }
 }
 
+async function checkTransactionForCorrectAccount(_swap) {
+  const transactions = await server.transactions
+    .forAccount(_swap.holdingAddress)
+    .order('desc')
+    .call();
+  const filtered = transactions.records
+    .map(trx => new Stellar.Transaction(trx.envelope_xdr))
+    .filter(
+      trx =>
+        trx.operations.length === 6 &&
+        trx.signatures.length === 2 &&
+        trx.operations[1].type === 'changeTrust' &&
+        trx.operations[1].line.Asset.code === process.env.STELLAR_DALA_ASSET_CODE &&
+        trx.operations[1].line.Asset.issuer === process.env.STELLAR_DALA_ASSET_ISSUER &&
+        trx.operations[2].type === 'setOptions' &&
+        trx.operations[2].signer.ed25519PublicKey === process.env.STELLAR_SWAPPEE
+    );
+  if (filtered.length) {
+    const updateEvent = ToaEvent.loadFrom(_swap);
+    await updateEvent.setValidated(true);
+  }
+}
+
 module.exports.onToaEvent = async event => {
   await secretsClient.load();
   const promises = event.Records.filter(record => record.eventName === 'INSERT' || record.eventName === 'MODIFY').map(record => {
     const atomicSwap = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
-    if (atomicSwap.targetChain !== Chains.Stellar) return Promise.resolve();
     switch (atomicSwap.status) {
       case Statuses.Accepted:
-        return checkTransactions(atomicSwap);
+        if (atomicSwap.targetChain !== Chains.Stellar) return Promise.resolve();
+        return checkTransactionsForCorrectHashlock(atomicSwap);
+      case Statuses.Prepared:
+        if (atomicSwap.sourceChain !== Chains.Stellar || atomicSwap.validated) return Promise.resolve();
+        return checkTransactionForCorrectAccount(atomicSwap);
       default:
         return Promise.resolve();
     }

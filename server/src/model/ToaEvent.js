@@ -28,7 +28,7 @@ class ToaEvent {
     return this;
   }
 
-  withSwapper(swapper){
+  withSwapper(swapper) {
     this.swapper = swapper;
     return this;
   }
@@ -68,7 +68,7 @@ class ToaEvent {
     return this;
   }
 
-  withSourceChain(sourceChain){
+  withSourceChain(sourceChain) {
     this.sourceChain = sourceChain;
     return this;
   }
@@ -86,7 +86,30 @@ class ToaEvent {
       .withEvent(swap.event)
       .withTargetChain(swap.targetChain)
       .withHoldingAddress(swap.holdingAddress)
-      .withPreimage(swap.preimage);
+      .withPreimage(swap.preimage)
+      .withSourceChain(swap.sourceChain);
+  }
+
+  setValidated(validated) {
+    return documentClient
+      .update({
+        TableName: 'ToaEvents',
+        Key: {
+          id: this.id,
+          status: this.status
+        },
+        UpdateExpression: 'SET #validated = :validated',
+        ConditionExpression: 'attribute_exists(#id) and attribute_exists(#status)',
+        ExpressionAttributeNames: {
+          '#validated': 'validated',
+          '#id': 'id',
+          '#status': 'status'
+        },
+        ExpressionAttributeValues: {
+          ':validated': validated
+        }
+      })
+      .promise();
   }
 
   incrementAcceptCounter(count) {
