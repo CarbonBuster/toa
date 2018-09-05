@@ -52,7 +52,7 @@ module.exports.onToaEvent = async event => {
     const swappee = process.env.ETHEREUM_SWAPPEE;
     const swap = new AtomicSwap({
       rpcUrl,
-      atomicSwapAddress,
+      contractAddress: atomicSwapAddress,
       signerAddress,
       signerPrivateKey,
       gas
@@ -60,7 +60,7 @@ module.exports.onToaEvent = async event => {
     await swap.load();
     const token = new DalaToken({
       rpcUrl,
-      tokenAddress,
+      contractAddress: tokenAddress,
       signerAddress,
       signerPrivateKey,
       gas

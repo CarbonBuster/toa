@@ -43,7 +43,8 @@ async function checkTransactionsForCorrectHashlock(_swap) {
 }
 
 async function checkTransactionForCorrectAccount(_swap) {
-  const transactions = await server.transactions
+  const transactions = await server
+    .transactions()
     .forAccount(_swap.holdingAddress)
     .order('desc')
     .call();
@@ -52,8 +53,9 @@ async function checkTransactionForCorrectAccount(_swap) {
     .filter(
       trx =>
         trx.operations.length === 6 &&
-        trx.signatures.length === 2 &&
+        trx.signatures.length === 2 && 
         trx.operations[1].type === 'changeTrust' &&
+        trx.operations[1].line && trx.operations[1].line.Asset &&
         trx.operations[1].line.Asset.code === process.env.STELLAR_DALA_ASSET_CODE &&
         trx.operations[1].line.Asset.issuer === process.env.STELLAR_DALA_ASSET_ISSUER &&
         trx.operations[2].type === 'setOptions' &&
