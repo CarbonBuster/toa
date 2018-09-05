@@ -25,19 +25,28 @@ async function closeSwap(_swap, swap) {
 }
 
 async function openSwap(_swap, swap, token) {
-  await token.approve(swap.contractAddress, _swap.value);
+  try {
+    const allowance = await token.allowance(swap.signerAddress, swap.contractAddress);
+    if (Number(allowance.toString()) !== 0) {
+      await token.approve(swap.contractAddress, 0);
+    }
+    await token.approve(swap.contractAddress, _swap.value);
 
-  return swap.open(
-    _swap.id,
-    _swap.value,
-    _swap.swappee,
-    _swap.hash,
-    _swap.timelock,
-    _swap.sourceChain,
-    _swap.targetChain,
-    _swap.targetAddress,
-    _swap.holdingAddress
-  );
+    return swap.open(
+      _swap.id,
+      _swap.value,
+      _swap.swappee,
+      _swap.hash,
+      _swap.timelock,
+      _swap.sourceChain,
+      _swap.targetChain,
+      _swap.targetAddress,
+      _swap.holdingAddress
+    );
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 }
 
 module.exports.onToaEvent = async event => {
@@ -47,7 +56,8 @@ module.exports.onToaEvent = async event => {
     const atomicSwapAddress = process.env.ETHEREUM_ATOMIC_SWAP_ADDRESS;
     const tokenAddress = process.env.ETHEREUM_DALA_TOKEN_ADDRESS;
     const signerAddress = `0x${process.env.ETHEREUM_SIGNER_ADDRESS}`;
-    const gas = process.ETHEREUM_DEFAULT_GAS;
+    const gas = process.env.ETHEREUM_DEFAULT_GAS;
+    console.log('gas', gas);
     const signerPrivateKey = process.env.ETHEREUM_SIGNER_PRIVATE_KEY;
     const swappee = process.env.ETHEREUM_SWAPPEE;
     const swap = new AtomicSwap({
@@ -64,7 +74,8 @@ module.exports.onToaEvent = async event => {
       signerAddress,
       signerPrivateKey,
       gas
-    })
+    });
+    await token.load();
     const promises = event.Records.filter(record => record.eventName === 'INSERT' || record.eventName === 'MODIFY').map(record => {
       const atomicSwap = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
       switch (atomicSwap.status) {

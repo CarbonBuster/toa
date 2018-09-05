@@ -55,9 +55,9 @@ async function checkTransactionForCorrectAccount(_swap) {
         trx.operations.length === 6 &&
         trx.signatures.length === 2 && 
         trx.operations[1].type === 'changeTrust' &&
-        trx.operations[1].line && trx.operations[1].line.Asset &&
-        trx.operations[1].line.Asset.code === process.env.STELLAR_DALA_ASSET_CODE &&
-        trx.operations[1].line.Asset.issuer === process.env.STELLAR_DALA_ASSET_ISSUER &&
+        trx.operations[1].line && 
+        trx.operations[1].line.code === process.env.STELLAR_DALA_ASSET_CODE &&
+        trx.operations[1].line.issuer === process.env.STELLAR_DALA_ASSET_ISSUER &&
         trx.operations[2].type === 'setOptions' &&
         trx.operations[2].signer.ed25519PublicKey === process.env.STELLAR_SWAPPEE
     );

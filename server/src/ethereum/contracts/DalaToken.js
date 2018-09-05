@@ -13,6 +13,11 @@ class DalaToken extends SmartContractBase {
     });
     return transaction;
   }
+
+  async allowance(owner, spender){
+    const allowance = await this.contractInstance.allowance(owner, spender);
+    return allowance;
+  }
 }
 
 module.exports = DalaToken;
