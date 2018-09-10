@@ -21,7 +21,7 @@ function* onGetSwaps() {
 
 function* onGetSwap(action) {
   let swap = yield call(SwapsService.getSwap, action.payload.id);
-  if (swap.sourceChain === 'ethereum') {
+  if (swap.sourceChain === 'ethereum' || swap.targetChain === 'ethereum') {
     yield put(getEthereumSwap(swap.id));
   }
   yield take(SWAP_UPDATED);

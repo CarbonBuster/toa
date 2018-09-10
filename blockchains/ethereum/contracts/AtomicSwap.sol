@@ -178,7 +178,7 @@ contract AtomicSwap {
         emit Accept(_swapID, _holdingAddress);
     }
 
-    function close(bytes32 _swapID, bytes _preimage) public onlyAcceptedSwaps(_swapID) onlyWithPreimage(_swapID, _preimage) {
+    function close(bytes32 _swapID, bytes _preimage) public onlyOpenOrAcceptedSwaps(_swapID) onlyWithPreimage(_swapID, _preimage) {
         // Close the swap.
         Swap memory swap = swaps[_swapID];
         swaps[_swapID].preimage = _preimage;
