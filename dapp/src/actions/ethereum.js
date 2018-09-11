@@ -63,10 +63,10 @@ export function prepareSwap(id) {
   };
 }
 
-export function claim(swapId, secret) {
+export function claim(swapId) {
   return {
     type: CLAIM,
-    payload: { swapId, secret }
+    payload: { swapId }
   };
 }
 

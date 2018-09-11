@@ -13,7 +13,6 @@ const swap = new AtomicSwap({
 });
 
 exports.performSwap = async swapData => {
-  console.log('performSwap');
   try {
     const distribution = process.env.STELLAR_DALA_DISTRIBUTION;
     const distributionSecret = process.env.STELLAR_DALA_DISTRIBUTION_SECRET;
@@ -48,6 +47,36 @@ exports.performSwap = async swapData => {
     return {
       holdingAddress: holdingKeys.publicKey()
     };
+  } catch (error) {
+    if (error.response && error.response.data) {
+      console.log(JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+};
+
+exports.claim = async swapData => {
+  try {
+    const { preimage, value, holdingAddress } = swapData;
+    const swapSize = new Big(value).div(10 ** 18).valueOf();
+    const depositorAccount = process.env.STELLAR_SWAPPEE;
+
+    console.log('preimage', preimage);
+    console.log('swapSize', swapSize);
+    console.log('depositorAccount', depositorAccount);
+    console.log('toBuffer', EthereumUtils.toBuffer(preimage));
+
+    const { claimTx } = await swap.buildClaimTransaction({
+      preimage: EthereumUtils.toBuffer(preimage),
+      depositorAccount,
+      holdingAccount: holdingAddress,
+      swapSize
+    });
+    const keypair = StellarSdk.Keypair.fromSecret(process.env.STELLAR_SWAPPEE_SECRET);
+    console.log('claimTx', claimTx);
+    claimTx.sign(keypair);
+    const transactionResult = await server.submitTransaction(claimTx);
+    console.log(transactionResult);
   } catch (error) {
     if (error.response && error.response.data) {
       console.log(JSON.stringify(error.response.data));

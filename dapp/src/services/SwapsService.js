@@ -57,6 +57,7 @@ export async function updateSwapTransaction(swap) {
       ...row.transaction,
       ...swap.transaction
     };
+    return row;
   });
   db.commit();
 }

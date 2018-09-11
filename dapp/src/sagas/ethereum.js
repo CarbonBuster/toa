@@ -1,4 +1,4 @@
-import { setDalaBalance, setEtherBalance, setLoaded, setAddress, setNetwork, OPEN_SWAP, GET_SWAP, PREPARE_SWAP } from '../actions/ethereum';
+import { setDalaBalance, setEtherBalance, setLoaded, setAddress, setNetwork, OPEN_SWAP, GET_SWAP, PREPARE_SWAP, CLAIM } from '../actions/ethereum';
 import { addSwap, updateSwap, updateSwapTransaction } from '../actions/swaps';
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import { push } from 'react-router-redux';
@@ -115,7 +115,7 @@ function* prepareSwap(action) {
       prepareTransaction
     }
   };
-  console.log('calling put(updateSwapTransaction)')
+  console.log('calling put(updateSwapTransaction)');
   yield put(updateSwapTransaction(payload));
 }
 
@@ -182,6 +182,23 @@ function* openSwap(action) {
   yield put(push('/'));
 }
 
+function* onClaim(action) {
+  let { swapId } = action.payload;
+  let swapData = yield call(SwapsService.getSwap, swapId);
+  const drizzle = yield select(state => state.drizzle.instance);
+  const AtomicSwap = drizzle.contracts.AtomicSwap;
+  const closeTransaction = yield call(
+    AtomicSwap.methods.close(swapId, ethUtil.bufferToHex(swapData.preimage.data)).send
+  );
+  yield put(updateSwapTransaction({
+    id: swapId,
+    transaction: {
+      closeTransaction
+    }
+  }))
+  yield put(push('/'));
+}
+
 export function* watchOpenSwap() {
   yield takeLatest(OPEN_SWAP, openSwap);
 }
@@ -196,4 +213,8 @@ export function* watchPrepareSwap() {
 
 export function* watchAccountsFetched() {
   yield takeLatest('ACCOUNTS_FETCHED', onAccountsFetched);
+}
+
+export function* watchClaim() {
+  yield takeLatest(CLAIM, onClaim);
 }

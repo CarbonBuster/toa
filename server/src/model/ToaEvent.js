@@ -90,6 +90,28 @@ class ToaEvent {
       .withSourceChain(swap.sourceChain);
   }
 
+  setPreimage(preimage) {
+    return documentClient
+      .update({
+        TableName: 'ToaEvents',
+        Key: {
+          id: this.id,
+          status: this.status
+        },
+        UpdateExpression: 'SET #preimage = :preimage',
+        ConditionExpression: 'attribute_exists(#id) and attribute_exists(#status)',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#status': 'status',
+          '#preimage': 'preimage'
+        },
+        ExpressionAttributeValues: {
+          ':preimage': preimage
+        }
+      })
+      .promise();
+  }
+
   setValidated(validated) {
     return documentClient
       .update({

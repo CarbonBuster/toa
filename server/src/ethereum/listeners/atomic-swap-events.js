@@ -5,6 +5,7 @@ const { UnhandledChainError } = require('../../lib/errors');
 const { performSwap } = require('../../stellar');
 const AtomicSwap = require('../contracts/AtomicSwap');
 const DalaToken = require('../contracts/DalaToken');
+const ToaEvent = require('../../model/ToaEvent');
 
 async function performTargetChainSwap(_swap, swap) {
   async function accept() {
@@ -49,6 +50,18 @@ async function openSwap(_swap, swap, token) {
   }
 }
 
+async function updatePreimage(_swap, swap){
+  try{
+    const preimage = await swap.getPreimage(_swap.id);
+    console.log('preimage', preimage);
+    const toa = ToaEvent.loadFrom(_swap);
+    await toa.setPreimage(preimage);
+  }catch(error){
+    console.log(error);
+    throw error;
+  }
+}
+
 module.exports.onToaEvent = async event => {
   try {
     await secretsClient.load();
@@ -57,7 +70,6 @@ module.exports.onToaEvent = async event => {
     const tokenAddress = process.env.ETHEREUM_DALA_TOKEN_ADDRESS;
     const signerAddress = `0x${process.env.ETHEREUM_SIGNER_ADDRESS}`;
     const gas = process.env.ETHEREUM_DEFAULT_GAS;
-    console.log('gas', gas);
     const signerPrivateKey = process.env.ETHEREUM_SIGNER_PRIVATE_KEY;
     const swappee = process.env.ETHEREUM_SWAPPEE;
     const swap = new AtomicSwap({
@@ -83,7 +95,13 @@ module.exports.onToaEvent = async event => {
           if (atomicSwap.swappee !== swappee) return Promise.resolve();
           return performTargetChainSwap(atomicSwap, swap);
         case Statuses.Close:
-          return closeSwap(atomicSwap, swap);
+          if(atomicSwap.sourceChain === Chains.Ethereum)
+            return closeSwap(atomicSwap, swap);
+          return Promise.resolve();
+        case Statuses.Closed:
+          if(atomicSwap.targetChain === Chains.Ethereum && !atomicSwap.preimage)
+            return updatePreimage(atomicSwap, swap);
+          return Promise.resolve();
         case Statuses.Prepared:
           if (atomicSwap.targetChain !== Chains.Ethereum || !atomicSwap.validated) return Promise.resolve();
           return openSwap(atomicSwap, swap, token);

@@ -126,11 +126,13 @@ class AtomicSwap {
     return { moveTx };
   }
 
-  async buildClaimTransaction({ preimage, depositorAccount, holdingAccount }) {
-    const holding = await this.server.loadAccount(holdingAccount);
-    const claimTx = new Stellar.TransactionBuilder(holding)
+  async buildClaimTransaction({ preimage, depositorAccount, holdingAccount, swapSize }) {
+    const depositor = await this.server.loadAccount(depositorAccount);
+    const claimTx = new Stellar.TransactionBuilder(depositor)
       .addOperation(
-        Stellar.Operation.accountMerge({
+        Stellar.Operation.payment({
+          asset: this.dalaAsset,
+          amount: swapSize,
           destination: depositorAccount,
           source: holdingAccount
         })

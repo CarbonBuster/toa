@@ -65,6 +65,11 @@ class AtomicSwap extends SmartContractBase {
     });
     return transaction;
   }
+
+  async getPreimage(id){
+    const preimage = await this.contractInstance.getPreimage(id);
+    return preimage;
+  }
 }
 
 module.exports = AtomicSwap;

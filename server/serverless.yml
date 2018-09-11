@@ -24,6 +24,7 @@ provider:
     STELLAR_SWAPPEE: ${self:custom.profiles.${self:provider.profile}.STELLAR_SWAPPEE} 
   environmentSecrets:
     STELLAR_DALA_DISTRIBUTION_SECRET: '/${self:service}/${self:provider.profile}/STELLAR_DALA_DISTRIBUTION_SECRET'
+    STELLAR_SWAPPEE_SECRET: '/${self:service}/${self:provider.profile}/STELLAR_SWAPPEE_SECRET'
     ETHEREUM_SIGNER_ADDRESS: '/${self:service}/${self:provider.profile}/ETHEREUM_SIGNER_ADDRESS'
     ETHEREUM_SIGNER_PRIVATE_KEY: '/${self:service}/${self:provider.profile}/ETHEREUM_SIGNER_PRIVATE_KEY'
   iamRoleStatements:
