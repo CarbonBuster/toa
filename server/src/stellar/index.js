@@ -17,7 +17,7 @@ exports.performSwap = async swapData => {
     const distribution = process.env.STELLAR_DALA_DISTRIBUTION;
     const distributionSecret = process.env.STELLAR_DALA_DISTRIBUTION_SECRET;
     const distributionKeypair = StellarSdk.Keypair.fromSecret(distributionSecret);
-    const { holdingKeys } = swap.makeHoldingKeys();
+    const { holdingKeys } = AtomicSwap.makeHoldingKeys();
     const { holdingTx, refundTx } = await swap.buildHoldingAccountTransaction({
       hashlock: EthereumUtils.toBuffer(swapData.hash),
       swapSize: new Big(swapData.value).div(10 ** 18).toFixed(7),

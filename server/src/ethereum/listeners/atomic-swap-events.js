@@ -50,13 +50,13 @@ async function openSwap(_swap, swap, token) {
   }
 }
 
-async function updatePreimage(_swap, swap){
-  try{
+async function updatePreimage(_swap, swap) {
+  try {
     const preimage = await swap.getPreimage(_swap.id);
     console.log('preimage', preimage);
     const toa = ToaEvent.loadFrom(_swap);
     await toa.setPreimage(preimage);
-  }catch(error){
+  } catch (error) {
     console.log(error);
     throw error;
   }
@@ -95,12 +95,11 @@ module.exports.onToaEvent = async event => {
           if (atomicSwap.swappee !== swappee) return Promise.resolve();
           return performTargetChainSwap(atomicSwap, swap);
         case Statuses.Close:
-          if(atomicSwap.sourceChain === Chains.Ethereum)
-            return closeSwap(atomicSwap, swap);
-          return Promise.resolve();
+          return closeSwap(atomicSwap, swap);
+          //if (atomicSwap.sourceChain === Chains.Ethereum) return closeSwap(atomicSwap, swap);
+          //return Promise.resolve();
         case Statuses.Closed:
-          if(atomicSwap.targetChain === Chains.Ethereum && !atomicSwap.preimage)
-            return updatePreimage(atomicSwap, swap);
+          if (atomicSwap.targetChain === Chains.Ethereum && !atomicSwap.preimage) return updatePreimage(atomicSwap, swap);
           return Promise.resolve();
         case Statuses.Prepared:
           if (atomicSwap.targetChain !== Chains.Ethereum || !atomicSwap.validated) return Promise.resolve();
